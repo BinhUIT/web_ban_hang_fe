@@ -6,6 +6,7 @@ import customFetch from "../axios/custom";
 import { checkUserProfileFormData } from "../utils/checkUserProfileFormData";
 import { setLoginStatus } from "../features/auth/authSlice";
 import { store } from "../store";
+import apiCall from "../axios/api";
 
 const UserProfile = () => {
   const navigate = useNavigate();
@@ -18,10 +19,7 @@ const UserProfile = () => {
     navigate("/login");
   };
 
-  const fetchUser = async (userId: number | string) => {
-    const response = await customFetch(`/users/${userId}`);
-    setUser(response.data);
-  };
+  
 
   const updateUser = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -46,12 +44,17 @@ const UserProfile = () => {
   };
 
   useEffect(() => {
-    const userId = JSON.parse(localStorage.getItem("user") || "{}").id;
-    if (!userId) {
+    const userFromLocaalStorageJSON = localStorage.getItem("user");
+    console.log(userFromLocaalStorageJSON);
+    if (!userFromLocaalStorageJSON) {
       toast.error("Please login to view this page");
       navigate("/login");
     } else {
-      fetchUser(userId);
+      const userFromLocalStorage = JSON.parse(userFromLocaalStorageJSON);
+      setUser({
+        name:userFromLocalStorage.name,
+        email:userFromLocalStorage.email
+      })
     }
   }, [navigate]);
   return (
@@ -59,7 +62,7 @@ const UserProfile = () => {
       <h1 className="text-3xl font-bold mb-8">User Profile</h1>
       <form className="flex flex-col gap-6" onSubmit={updateUser}>
         <div className="flex flex-col gap-1">
-          <label htmlFor="firstname">First Name</label>
+          <label htmlFor="firstname">User Name</label>
           <input
             type="text"
             className="bg-white border border-black text-xl py-2 px-3 w-full outline-none max-[450px]:text-base"
@@ -69,17 +72,7 @@ const UserProfile = () => {
             defaultValue={user?.name}
           />
         </div>
-        <div className="flex flex-col gap-1">
-          <label htmlFor="lastname">Last Name</label>
-          <input
-            type="text"
-            className="bg-white border border-black text-xl py-2 px-3 w-full outline-none max-[450px]:text-base"
-            placeholder="Enter last name"
-            id="lastname"
-            name="lastname"
-            defaultValue={user?.lastname}
-          />
-        </div>
+        
         <div className="flex flex-col gap-1">
           <label htmlFor="email">Email</label>
           <input
@@ -91,17 +84,7 @@ const UserProfile = () => {
             defaultValue={user?.email}
           />
         </div>
-        <div className="flex flex-col gap-1">
-          <label htmlFor="password">Password</label>
-          <input
-            type="password"
-            className="bg-white border border-black text-xl py-2 px-3 w-full outline-none max-[450px]:text-base"
-            placeholder="Enter password"
-            id="password"
-            name="password"
-            defaultValue={user?.password}
-          />
-        </div>
+        
         <Button type="submit" text="Update Profile" mode="brown" />
         <Link
           to="/order-history"

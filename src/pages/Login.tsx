@@ -1,11 +1,12 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "../components";
 import { checkLoginFormData } from "../utils/checkLoginFormData";
-import customFetch from "../axios/custom";
+
 import toast from "react-hot-toast";
 import { useEffect } from "react";
 import { setLoginStatus } from "../features/auth/authSlice";
 import { store } from "../store";
+import apiCall from "../axios/api";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -15,12 +16,27 @@ const Login = () => {
     // Get form data
     const formData = new FormData(e.currentTarget);
     const data = Object.fromEntries(formData);
+    console.log("Data from form",data);
     // Check if form data is valid
     if (!checkLoginFormData(data)) return;
     
     // Check if user with the email and password exists
-    const users = await customFetch.get("/users");
-    let userId: number = 0; // Initialize userId with a default value
+    apiCall('post','unsecure/login',{email:data.email,password:data.password},null).then(response=>{
+      console.log(response.data);
+      toast.success("You logged in successfully"); 
+      localStorage.setItem("user", JSON.stringify({email:data.email,password:"", id: response.data.user.id,name:response.data.user.name})); 
+      
+      localStorage.setItem("token",response.data.token);
+      localStorage.setItem("token_expire_at",response.data.tokenExpireAt);
+      store.dispatch(setLoginStatus(true));
+      navigate("/user-profile");
+      return;
+    }).catch(err=>{
+      console.log(err); 
+      toast.error("Please enter correct email and password");
+    });
+  }
+    /*let userId: number = 0; // Initialize userId with a default value
     const userExists = users.data.some(
       (user: { id: number; email: string; password: string }) => {
         if (user.email === data.email) {
@@ -40,7 +56,7 @@ const Login = () => {
     } else {
       toast.error("Please enter correct email and password");
     }
-  };
+  };*/
 
   useEffect(() => {
     const user = localStorage.getItem("user");
