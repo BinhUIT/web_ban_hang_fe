@@ -1,7 +1,6 @@
 import {
   Button,
   Dropdown,
-  ProductItem,
   QuantityInput,
   StandardSelectInput,
 } from "../components";
@@ -11,30 +10,63 @@ import { addProductToTheCart } from "../features/cart/cartSlice";
 import { useAppDispatch } from "../hooks";
 import WithSelectInputWrapper from "../utils/withSelectInputWrapper";
 import WithNumberInputWrapper from "../utils/withNumberInputWrapper";
-import { formatCategoryName } from "../utils/formatCategoryName";
+
 import toast from "react-hot-toast";
+import { baseURL } from "../axios/baseURL";
+import { formatCategoryName } from "../utils/formatCategoryName";
 
 const SingleProduct = () => {
   const [products, setProducts] = useState<Product[]>([]);
-  const [singleProduct, setSingleProduct] = useState<Product | null>(null);
-  // defining default values for input fields
-  const [size, setSize] = useState<string>("xs");
-  const [color, setColor] = useState<string>("black");
+  const [singleProduct, setSingleProduct] = useState<any>({});
+  const [size, setSize] = useState<string>("");
+  const [color, setColor] = useState<string>("");
   const [quantity, setQuantity] = useState<number>(1);
   const params = useParams<{ id: string }>();
   const dispatch = useAppDispatch();
+  const [currentPrice, setCurrentPrice] = useState("");
+  const [currentQuantity, setCurrentQuantity] = useState(0);
+  const [currentImage, setCurrentImage] = useState("");
+  const [colorMap, setColorMap] = useState(new Map());
+  const [currentVariant, setCurrentVariant] = useState({
+    color: "",
+    size: "",
+  });
 
-  // defining HOC instances
   const SelectInputUpgrade = WithSelectInputWrapper(StandardSelectInput);
   const QuantityInputUpgrade = WithNumberInputWrapper(QuantityInput);
 
+  function findProductVariant(product: any, color: string, size: string) {
+    for (let pv of product.productVariants) {
+      if (
+        pv.productColor.color == color &&
+        pv.productSize.productSize == size
+      ) {
+        return pv;
+      }
+    }
+    return null;
+  }
+
+  function joinProductColor(product: any) {
+    const colorMap = new Map();
+    for (let pv of product.productVariants) {
+      if (!colorMap.get(pv.productColor.color)) {
+        colorMap.set(pv.productColor.color, []);
+      }
+      colorMap.get(pv.productColor.color).push(pv);
+    }
+    return colorMap;
+  }
+
   useEffect(() => {
     const fetchSingleProduct = async () => {
-      const response = await fetch(
-        `http://localhost:3000/products/${params.id}`
-      );
+      const response = await fetch(`${baseURL}/unsecure/product/${params.id}`);
       const data = await response.json();
       setSingleProduct(data);
+      setCurrentPrice(`${data?.minPrice}đ - ${data?.maxPrice}đ`);
+      setCurrentQuantity(data.quantity);
+      setCurrentImage(data.image);
+      setColorMap(joinProductColor(data));
     };
 
     const fetchProducts = async () => {
@@ -42,6 +74,7 @@ const SingleProduct = () => {
       const data = await response.json();
       setProducts(data);
     };
+
     fetchSingleProduct();
     fetchProducts();
   }, [params.id]);
@@ -67,114 +100,116 @@ const SingleProduct = () => {
   };
 
   return (
-    <div className="max-w-screen-2xl mx-auto px-5 max-[400px]:px-3">
-      <div className="grid grid-cols-3 gap-x-8 max-lg:grid-cols-1">
-        <div className="lg:col-span-2">
-          <img
-            src={`/src/assets/${singleProduct?.image}`}
-            alt={singleProduct?.title}
-          />
-        </div>
-        <div className="w-full flex flex-col gap-5 mt-9">
-          <div className="flex flex-col gap-2">
-            <h1 className="text-4xl">{singleProduct?.title}</h1>
-            <div className="flex justify-between items-center">
-              <p className="text-base text-secondaryBrown">
-                {formatCategoryName(singleProduct?.category || "")}
-              </p>
-              <p className="text-base font-bold">${ singleProduct?.price }</p>
-            </div>
+    <div className="max-w-screen-2xl mx-auto px-5 py-10">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+        {/* Image */}
+        <div className="flex flex-col items-center">
+          <div className="w-full max-w-md border rounded-2xl overflow-hidden shadow-sm">
+            <img
+              src={`${baseURL}/${currentImage}`}
+              alt={singleProduct?.title}
+              className="w-full h-auto object-cover"
+            />
           </div>
-          <div className="flex flex-col gap-2">
-            <SelectInputUpgrade
-              selectList={[
-                { id: "xs", value: "XS" },
-                { id: "sm", value: "SM" },
-                { id: "m", value: "M" },
-                { id: "lg", value: "LG" },
-                { id: "xl", value: "XL" },
-                { id: "2xl", value: "2XL" },
-              ]}
-              value={size}
-              onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                setSize(() => e.target.value)
-              }
-            />
-            <SelectInputUpgrade
-              selectList={[
-                { id: "black", value: "BLACK" },
-                { id: "red", value: "RED" },
-                { id: "blue", value: "BLUE" },
-                { id: "white", value: "WHITE" },
-                { id: "rose", value: "ROSE" },
-                { id: "green", value: "GREEN" },
-              ]}
-              value={color}
-              onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                setColor(() => e.target.value)
-              }
-            />
+        </div>
 
+        {/* Product Info */}
+        <div className="flex flex-col gap-6">
+          {/* Title + Category */}
+          <div>
+            <h1 className="text-3xl font-semibold text-gray-900">
+              {singleProduct?.name}
+            </h1>
+            <p className="text-sm text-gray-500 mt-1">
+              {formatCategoryName(singleProduct?.categories || "")}
+            </p>
+          </div>
+
+          {/* Price + Stock */}
+          <div className="flex items-center justify-between">
+            <p className="text-2xl font-bold text-red-600">{currentPrice}</p>
+            <p className="text-sm text-gray-600">
+              Quantity:{" "}
+              <span className="font-semibold text-gray-800">
+                {currentQuantity}
+              </span>
+            </p>
+          </div>
+
+          {/* Variants */}
+          <div className="space-y-4">
+            <h4 className="text-lg font-medium text-gray-800">Custom</h4>
+            {colorMap &&
+              [...colorMap.entries()].map(([Key, value]) => {
+                const selectList = [{ value: "Not selected" }];
+                for (let variantId = 0; variantId < value.length; variantId++) {
+                  selectList.push({
+                    value: value[variantId].productSize.productSize,
+                  });
+                }
+                const currentValue = () => {
+                  if (currentVariant.color == Key) {
+                    return currentVariant.size;
+                  }
+                  return "Not selected";
+                };
+
+                return (
+                  <div key={Key} className="flex items-center gap-4">
+                    <span className="min-w-[70px] font-medium text-gray-700">
+                      {Key}
+                    </span>
+                    <SelectInputUpgrade
+                      selectList={selectList}
+                      value={currentValue()}
+                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                        const productVariant = findProductVariant(
+                          singleProduct,
+                          Key,
+                          e.target.value
+                        );
+                        setCurrentImage(productVariant.image);
+                        setCurrentQuantity(productVariant.quantity);
+                        setCurrentPrice(productVariant.price + "đ");
+                        setCurrentVariant(() => {
+                          return { color: Key, size: e.target.value };
+                        });
+                      }}
+                    />
+                  </div>
+                );
+              })}
+          </div>
+
+          {/* Quantity + Add to Cart */}
+          <div className="flex items-center gap-4 mt-2">
             <QuantityInputUpgrade
               value={quantity}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                 setQuantity(() => parseInt(e.target.value))
               }
             />
-          </div>
-          <div className="flex flex-col gap-3">
-            <Button mode="brown" text="Add to cart" onClick={handleAddToCart} />
-            <p className="text-secondaryBrown text-sm text-right">
-              Delivery estimated on the Friday, July 26
-            </p>
-          </div>
-          <div>
-            {/* drowdown items */}
-            <Dropdown dropdownTitle="Description">
-              Lorem ipsum dolor, sit amet consectetur adipisicing elit. Labore
-              quos deleniti, mollitia, vitae harum suscipit voluptatem quasi, ab
-              assumenda accusantium rem praesentium accusamus quae quam tempore
-              nostrum corporis eaque. Mollitia.
-            </Dropdown>
-
-            <Dropdown dropdownTitle="Product Details">
-              Lorem ipsum dolor sit amet, consectetur adipisicing elit. Fuga ad
-              at odio illo, necessitatibus, reprehenderit dolore voluptas ea
-              consequuntur ducimus repellat soluta mollitia facere sapiente.
-              Unde provident possimus hic dolore.
-            </Dropdown>
-
-            <Dropdown dropdownTitle="Delivery Details">
-              Lorem ipsum dolor sit amet, consectetur adipisicing elit. Fuga ad
-              at odio illo, necessitatibus, reprehenderit dolore voluptas ea
-              consequuntur ducimus repellat soluta mollitia facere sapiente.
-              Unde provident possimus hic dolore.
-            </Dropdown>
-          </div>
-        </div>
-      </div>
-
-      {/* similar products */}
-      <div>
-        <h2 className="text-black/90 text-5xl mt-24 mb-12 text-center max-lg:text-4xl">
-          Similar Products
-        </h2>
-        <div className="flex flex-wrap justify-between items-center gap-y-8 mt-12 max-xl:justify-start max-xl:gap-5 ">
-          {products.slice(0, 3).map((product: Product) => (
-            <ProductItem
-              key={product?.id}
-              id={product?.id}
-              image={product?.image}
-              title={product?.title}
-              category={product?.category}
-              price={product?.price}
-              popularity={product?.popularity}
-              stock={product?.stock}
+            <Button
+              mode="brown"
+              text="Add to cart"
+              onClick={handleAddToCart}
+              className="w-full py-3 rounded-xl font-medium text-lg"
             />
-          ))}
+          </div>
+
+          {/* Description */}
+          <div className="space-y-3">
+            <Dropdown dropdownTitle="Short Description">
+              {singleProduct?.shortDesc}
+            </Dropdown>
+            <Dropdown dropdownTitle="Detail Description">
+              {singleProduct?.detailDesc}
+            </Dropdown>
+          </div>
         </div>
       </div>
     </div>
   );
 };
+
 export default SingleProduct;

@@ -7,6 +7,7 @@ import { useEffect } from "react";
 import { setLoginStatus } from "../features/auth/authSlice";
 import { store } from "../store";
 import apiCall from "../axios/api";
+import { ggIds } from "../axios/GGids";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -24,7 +25,7 @@ const Login = () => {
     apiCall('post','unsecure/login',{email:data.email,password:data.password},null).then(response=>{
       console.log(response.data);
       toast.success("You logged in successfully"); 
-      localStorage.setItem("user", JSON.stringify({email:data.email,password:"", id: response.data.user.id,name:response.data.user.name})); 
+      localStorage.setItem("user", JSON.stringify({email:data.email,password:"", id: response.data.user.id,name:response.data.user.name, address:response.data.user.address, phone:response.data.user.phone})); 
       
       localStorage.setItem("token",response.data.token);
       localStorage.setItem("token_expire_at",response.data.tokenExpireAt);
@@ -35,6 +36,13 @@ const Login = () => {
       console.log(err); 
       toast.error("Please enter correct email and password");
     });
+  } 
+  async function getGoogleAcessToken() {
+    const callbackURL = window.location.origin;
+    const ggId = ggIds.ggClientId;
+    const targetUrl = `https://accounts.google.com/o/oauth2/auth?redirect_uri=${encodeURIComponent(
+      callbackURL
+    )}&response_type=token&client_id=${ggId}&scope=openid%20email%20profile`;
   }
     /*let userId: number = 0; // Initialize userId with a default value
     const userExists = users.data.some(
@@ -95,7 +103,16 @@ const Login = () => {
             />
           </div>
         </div>
-        <Button type="submit" text="Login" mode="brown" />
+        <Button type="submit" text="Login" mode="brown" /> 
+        <div className="google-login-container">
+        <div className="google-btn" onClick={(e)=>{
+          e.preventDefault(); 
+          getGoogleAcessToken();
+        }}>
+         <img src="https://www.gstatic.com/fire  basejs/ui/2.0.0/images/auth/google.svg" alt="Google logo"/>
+            <span>Login with Google</span>
+        </div>
+    </div>
         <Link
           to="/register"
           className="text-xl max-md:text-lg max-[450px]:text-sm"

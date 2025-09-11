@@ -53,7 +53,9 @@ const UserProfile = () => {
       const userFromLocalStorage = JSON.parse(userFromLocaalStorageJSON);
       setUser({
         name:userFromLocalStorage.name,
-        email:userFromLocalStorage.email
+        email:userFromLocalStorage.email,
+        address:userFromLocalStorage.address?userFromLocalStorage.address:"", 
+        phone: userFromLocalStorage.phone?userFromLocalStorage.phone:""
       })
     }
   }, [navigate]);
@@ -82,6 +84,28 @@ const UserProfile = () => {
             id="email"
             name="email"
             defaultValue={user?.email}
+          />
+        </div> 
+        <div className="flex flex-col gap-1">
+          <label htmlFor="firstname">Address</label>
+          <input
+            type="text"
+            className="bg-white border border-black text-xl py-2 px-3 w-full outline-none max-[450px]:text-base"
+            placeholder="Enter first name"
+            id="firstname"
+            name="name"
+            defaultValue={user?user.address:""}
+          />
+        </div> 
+        <div className="flex flex-col gap-1">
+          <label htmlFor="firstname">Phone number</label>
+          <input
+            type="text"
+            className="bg-white border border-black text-xl py-2 px-3 w-full outline-none max-[450px]:text-base"
+            placeholder="Enter first name"
+            id="firstname"
+            name="name"
+            defaultValue={user?user.phone:""}
           />
         </div>
         
