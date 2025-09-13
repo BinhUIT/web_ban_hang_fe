@@ -10,7 +10,8 @@ const ProductItem = ({
   title,
   category,
   price,
-  rating
+  rating,
+  tags
 }: {
   id: string;
   image: string;
@@ -18,6 +19,7 @@ const ProductItem = ({
   category: string;
   price: string;
   rating: number;
+  tags: string[]
 }) => {
   return (
     <div className="w-full sm:w-[48%] lg:w-[30%] flex flex-col gap-3 p-4 bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow">
@@ -48,7 +50,19 @@ const ProductItem = ({
           <CategoryLink categoryName={category[0]}/> {"/"}
           <CategoryLink categoryName={category[1]}/>
         
-      </p>
+      </p> 
+      {tags && tags.length > 0 && (
+  <div className="flex flex-wrap justify-center gap-2 mt-1">
+    {tags.map((tag) => (
+      <span
+        key={tag}
+        className="px-3 py-1 text-xs font-medium bg-gray-100 text-gray-600 rounded-full hover:bg-secondaryBrown hover:text-white transition-colors"
+      >
+        {tag}
+      </span>
+    ))}
+  </div>
+)}
 
       {/* Price */}
       <p className="text-secondaryBrown text-2xl text-center font-bold max-md:text-xl">

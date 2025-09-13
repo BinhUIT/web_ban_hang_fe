@@ -19,7 +19,8 @@ const ProductGrid = ({ products }: { products?: object[] }) => {
           price={formatPrice(item?.minPrice)} 
           rating={item?.rating}
           image={item?.image} 
-          category={item?.categories}/> </Suspense>
+          category={item?.categories}
+          tags={item?.tags}/> </Suspense>
         })
         }
     </div>

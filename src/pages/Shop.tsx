@@ -37,12 +37,7 @@ const Shop = () => {
   
     <div className="max-w-screen-2xl mx-auto pt-10">
        {searchParams.get("keyword")&&<div className="absolute top-0 right-0 mt-2 mr-2">
-    <button className="px-4 py-2 bg-black text-white rounded-lg shadow hover:bg-gray-800" onClick={(e)=>{
-      e.preventDefault();
-      navigate("/shop",{state:{reset:true}});
-    }}>
-      View all products
-    </button>
+    
   </div>}
       <ShopPageContent
         categories={categories}

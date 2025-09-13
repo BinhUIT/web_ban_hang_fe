@@ -8,6 +8,7 @@ import { setLoginStatus } from "../features/auth/authSlice";
 import { store } from "../store";
 import apiCall from "../axios/api";
 import { ggIds } from "../axios/GGids";
+import { baseURL } from "../axios/baseURL";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -22,15 +23,23 @@ const Login = () => {
     if (!checkLoginFormData(data)) return;
     
     // Check if user with the email and password exists
-    apiCall('post','unsecure/login',{email:data.email,password:data.password},null).then(response=>{
-      console.log(response.data);
-      toast.success("You logged in successfully"); 
-      localStorage.setItem("user", JSON.stringify({email:data.email,password:"", id: response.data.user.id,name:response.data.user.name, address:response.data.user.address, phone:response.data.user.phone})); 
-      
-      localStorage.setItem("token",response.data.token);
-      localStorage.setItem("token_expire_at",response.data.tokenExpireAt);
+    fetch(baseURL+"/unsecure/login",{
+      method:"POST",
+      headers:{
+        "Content-type":"application/json"
+      },
+      body: JSON.stringify(data)
+    }).then(response=>{
+      response.json().then(data=>{
+        toast.success("You logged in successfully"); 
+        localStorage.setItem("user", JSON.stringify({email:data.user.email,password:"", id: data.user.id,name:data.user.name, address:data.user.address, phone:data.user.phone})); 
+      localStorage.setItem("token",data.token);
+      localStorage.setItem("token_expire_at",data.tokenExpireAt);
       store.dispatch(setLoginStatus(true));
       navigate("/user-profile");
+      })
+      
+      
       return;
     }).catch(err=>{
       console.log(err); 

@@ -4,7 +4,7 @@ import {
   QuantityInput,
   StandardSelectInput,
 } from "../components";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import React, { useEffect, useState } from "react";
 import { addProductToTheCart } from "../features/cart/cartSlice";
 import { useAppDispatch } from "../hooks";
@@ -30,10 +30,12 @@ const SingleProduct = () => {
   const [currentVariant, setCurrentVariant] = useState({
     color: "",
     size: "",
+    id:0
   });
-
+  
   const SelectInputUpgrade = WithSelectInputWrapper(StandardSelectInput);
   const QuantityInputUpgrade = WithNumberInputWrapper(QuantityInput);
+  const navigate = useNavigate();
 
   function findProductVariant(product: any, color: string, size: string) {
     for (let pv of product.productVariants) {
@@ -79,23 +81,41 @@ const SingleProduct = () => {
     fetchProducts();
   }, [params.id]);
 
-  const handleAddToCart = () => {
-    if (singleProduct) {
-      dispatch(
-        addProductToTheCart({
-          id: singleProduct.id + size + color,
-          image: singleProduct.image,
-          title: singleProduct.title,
-          category: singleProduct.category,
-          price: singleProduct.price,
-          quantity,
-          size,
-          color,
-          popularity: singleProduct.popularity,
-          stock: singleProduct.stock,
-        })
-      );
-      toast.success("Product added to the cart");
+  const handleAddToCart = async () => {
+    const token =  localStorage.getItem("token");
+    if(!token) {
+      navigate("/login");
+      return;
+    } 
+    
+
+    if(currentVariant.id==0) {
+      toast("Please choose variant", {
+      icon: "⚠️",
+      style: {
+        border: "1px solid #facc15", // vàng vàng
+        padding: "16px",
+        color: "#713f12",
+      },
+    });
+    }
+    const jsonBody = {
+      productVariantId:currentVariant.id,
+      amount:quantity
+    }
+    const response = await fetch(baseURL+"/user/add_to_cart",{
+      method:"POST",
+      headers: {
+        "Content-type":"application/json",
+        "Authorization":"Bearer "+token
+      },
+      body:JSON.stringify(jsonBody)
+    });
+    if(response.ok) {
+      toast.success("Add item to cart success");
+    } 
+    else {
+      toast.error("Add to cart fail, please try again");
     }
   };
 
@@ -172,7 +192,7 @@ const SingleProduct = () => {
                         setCurrentQuantity(productVariant.quantity);
                         setCurrentPrice(productVariant.price + "đ");
                         setCurrentVariant(() => {
-                          return { color: Key, size: e.target.value };
+                          return { color: Key, size: e.target.value, id:productVariant.id};
                         });
                       }}
                     />
