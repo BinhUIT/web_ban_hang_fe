@@ -2,7 +2,7 @@ import { HiBars3 } from "react-icons/hi2";
 import { HiOutlineUser } from "react-icons/hi2";
 import { HiOutlineMagnifyingGlass } from "react-icons/hi2";
 import { HiOutlineShoppingBag } from "react-icons/hi2";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import SidebarMenu from "./SidebarMenu";
 import { useState } from "react";
 import ShopBanner from "./ShopBanner";
@@ -10,6 +10,7 @@ import ShopBanner from "./ShopBanner";
 const Header = ({categories}:{categories:any[]}) => {
   const [ isSidebarOpen, setIsSidebarOpen ] = useState(false);
   const [isShowCats, setIsShowCats] = useState(false);
+  const navigate = useNavigate();
   return (
     <>
     <header className="max-w-screen-2xl flex text-center justify-between items-center py-4 px-5 text-black mx-auto max-sm:px-5 max-[400px]:px-3 relative">
@@ -44,12 +45,30 @@ const Header = ({categories}:{categories:any[]}) => {
       <Link to="/search">
         <HiOutlineMagnifyingGlass className="text-2xl max-sm:text-xl" />
       </Link>
-      <Link to="/login">
+      <button onClick={(e)=>{
+        e.preventDefault();
+        const token = localStorage.getItem("token");
+        if(!token) {
+          navigate("/login");
+        }
+        else {
+          navigate("/user-profile");
+        }
+      }}>
         <HiOutlineUser className="text-2xl max-sm:text-xl" />
-      </Link>
-      <Link to="/cart">
+      </button>
+      <button onClick={(e)=>{
+        e.preventDefault();
+        const token = localStorage.getItem("token");
+        if(!token) {
+          navigate("/login");
+        }
+        else {
+          navigate("/cart");
+        }
+      }}>
         <HiOutlineShoppingBag className="text-2xl max-sm:text-xl" />
-      </Link>
+      </button>
     </div>
   </div>
 </header>

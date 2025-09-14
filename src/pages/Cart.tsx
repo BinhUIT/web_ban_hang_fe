@@ -4,17 +4,151 @@ import {
   HiQuestionMarkCircle as QuestionMarkCircleIcon,
 } from "react-icons/hi2";
 import { useAppDispatch, useAppSelector } from "../hooks";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   removeProductFromTheCart,
   updateProductQuantity,
 } from "../features/cart/cartSlice";
 import toast from "react-hot-toast";
+import { useEffect, useState } from "react";
+import { baseURL } from "../axios/baseURL";
 
 const Cart = () => {
   const { productsInCart, subtotal } = useAppSelector((state) => state.cart);
   const dispatch = useAppDispatch();
+  const [cartItems, setCartItems] = useState<any[]>([]);
+  const [cartItemAmount, setCartItemAmount] = useState<Map<number,number>>(new Map());
+  const [total, setTotal] = useState<number>(0);
+  const navigate = useNavigate();
+  function fetchCart(token:string) {
+    fetch(baseURL+"/user/cart",{
+          method:"GET",
+          headers:{
+            "Content-type":"application/json",
+            "Authorization":`Bearer ${token}`
+          }
+        }).then((response)=>{
+          response.json().then((data)=>{
+            console.log(data);
+            setCartItems(data.cartItems);
+            let newTotal=0;
+            for(let item of data.cartItems) {
+              newTotal= newTotal+item.productVariant.price*item.amount;
+            }
+            setTotal(newTotal);
+            const tempMap= new Map();
+            for(let item of data.cartItems) {
+              tempMap.set(item.id,item.amount);
+            }
+            setCartItemAmount(tempMap);
+          })
+        }).catch(err=>{
+          toast.error("Error, please reload page");
+        }) 
+  }
+  function checkToken() {
+    const token = localStorage.getItem("token");
+    if(!token) {
+      localStorage.removeItem("user");
+      localStorage.removeItem("token");
+      navigate("/login");
+      
+    } 
+    return token;
+  }
+  function onDontSave() {
+    const token = localStorage.getItem("token");
+    if(token) {
+      fetchCart(token);
+    }
+  }
+  async function onClearAll() {
+    const token = localStorage.getItem("token");
+    if(token) {
+      const response = await fetch(baseURL+"/user/clear_cart",{
+        method:"DELETE",
+        headers:{
+          "Content-type":"application/json",
+          "Authorization":"Bearer "+token
+        }
+      });
+      if(response.ok) {
+                                fetchCart(token);
+                                toast.success("Cleared items");
+                              } 
+                              else if(response.status==401) { 
+                                localStorage.removeItem("user");
+                                localStorage.removeItem("token");
+                                navigate("/login");
+                              }
+                              else {
+                                toast.error("Error, please try again");
+                              }
+    }
+  }
+  useEffect(()=>{
+    
+    const token = checkToken();
+    if(token) {
+      fetchCart(token); 
+    }
+  },[])
+  async function onSaveItems() {
+     const token = checkToken();
+     if(token) {
+      const requestBody = Array.from(cartItemAmount).map(([key, value])=>{
+        return {
+          cartItemId:key,
+          newAmount:value
+        }
+      });
+      const response = await fetch(baseURL+"/user/update_many_cart_item" ,{
+                method:"PUT",
+                                headers:{
+                                  "Content-type":"application/json",
+                                  "Authorization":"Bearer "+token
+                                },
+                                body:JSON.stringify(requestBody)
+                              })
+                              if(response.ok) {
+                                fetchCart(token);
+                                toast.success("Saved items");
+                              } 
+                              else if(response.status==401) { 
+                                localStorage.removeItem("user");
+                                localStorage.removeItem("token");
+                                navigate("/login");
+                              }
+                              else {
+                                toast.error("Error, please try again");
+                              }
 
+  }
+}
+async function onClearOne(id:number) {
+  const token = localStorage.getItem("token");
+    if(token) {
+      const response = await fetch(baseURL+"/user/delete_cart_item/"+id,{
+        method:"DELETE",
+        headers:{
+          "Content-type":"application/json",
+          "Authorization":"Bearer "+token
+        }
+      });
+      if(response.ok) {
+                                fetchCart(token);
+                                toast.success("Item deleted");
+                              } 
+                              else if(response.status==401) { 
+                                localStorage.removeItem("user");
+                                localStorage.removeItem("token");
+                                navigate("/login");
+                              }
+                              else {
+                                toast.error("Error, please try again");
+                              }
+    }
+}
   return (
     <div className="bg-white mx-auto max-w-screen-2xl px-5 max-[400px]:px-3">
       <div className="pb-24 pt-16">
@@ -31,12 +165,14 @@ const Cart = () => {
               role="list"
               className="divide-y divide-gray-200 border-b border-t border-gray-200"
             >
-              {productsInCart.map((product) => (
-                <li key={product.id} className="flex py-6 sm:py-10">
+              {cartItems.map((item) => {
+                const productVariant = item.productVariant;
+                return (
+                <li key={productVariant.id} className="flex py-6 sm:py-10">
                   <div className="flex-shrink-0">
                     <img
-                      src={`/src/assets/${product.image}`}
-                      alt={product.title}
+                      src={`${baseURL}/${productVariant.image}`}
+                      alt={productVariant.name}
                       className="h-24 w-24 object-cover object-center sm:h-48 sm:w-48"
                     />
                   </div>
@@ -47,52 +183,80 @@ const Cart = () => {
                         <div className="flex justify-between">
                           <h3 className="text-sm">
                             <Link
-                              to={`/product/${product.id}`}
+                              to={`/product/${productVariant.productId}`}
                               className="font-medium text-gray-700 hover:text-gray-800"
                             >
-                              {product.title}
+                              {productVariant.name}
                             </Link>
                           </h3>
                         </div>
                         <div className="mt-1 flex text-sm">
-                          <p className="text-gray-500">{product.color}</p>
-                          {product.size ? (
+                          <p className="text-gray-500">{productVariant.productColor.color}</p>
+                          {productVariant.productSize.productSize ? (
                             <p className="ml-4 border-l border-gray-200 pl-4 text-gray-500">
-                              {product.size}
+                              {productVariant.productSize.productSize}
                             </p>
                           ) : null}
                         </div>
                         <p className="mt-1 text-sm font-medium text-gray-900">
-                          ${product.price}
+                          {productVariant.price}đ
                         </p>
                       </div>
 
                       <div className="mt-4 sm:mt-0 sm:pr-9">
-                        <label htmlFor="quantity mr-5">Quantity: </label>
+                        <label htmlFor="quantity mr-5">Amount: </label>
                         <input
                           type="number"
                           id="quantity"
+                          min="1"
                           className="w-16 h-7 indent-1 bg-white border"
-                          value={product?.quantity}
-                          onChange={(e) => {
-                            dispatch(
-                              updateProductQuantity({
-                                id: product?.id,
-                                quantity: parseInt(e.target.value),
+                          value={cartItemAmount.get(item.id)}
+                          onChange={
+                            async (e)=>{
+                              e.preventDefault();
+                              if(Number.parseInt(e.target.value)<=0) {
+                                return;
+                              }
+                              /*const token = checkToken();
+                              const requestBody = {
+                                cartItemId:item.id,
+                                newAmount:e.target.value
+                              }
+                              const response = await fetch(baseURL+"/user/update_cart" ,{
+                                method:"PUT",
+                                headers:{
+                                  "Content-type":"application/json",
+                                  "Authorization":"Bearer "+token
+                                },
+                                body:JSON.stringify(requestBody)
                               })
-                            );
-                          }}
+                              if(response.ok) {
+                                fetchCart(token);
+
+                              } 
+                              else if(response.status==401) { 
+                                localStorage.removeItem("user");
+                                localStorage.removeItem("token");
+                                navigate("/login");
+                              }
+                              else {
+                                toast.error("Error, please try again");
+                              }*/
+                              const tempMap = new Map(cartItemAmount);
+                              tempMap.set(item.id,Number.parseInt(e.target.value));
+                              setCartItemAmount(tempMap);
+                            }
+                          }
                         />
 
                         <div className="absolute right-0 top-0">
                           <button
                             type="button"
                             className="-m-2 inline-flex p-2 text-gray-400 hover:text-gray-500"
-                            onClick={() =>{
-                              dispatch(
-                                removeProductFromTheCart({ id: product?.id })
-                              ); toast.error("Product removed from the cart");}
-                            }
+                            onClick={(e)=>{
+                              e.preventDefault();
+                              onClearOne(item.id);
+                            }}
                           >
                             <span className="sr-only">Remove</span>
                             <XMarkIcon className="h-5 w-5" aria-hidden="true" />
@@ -102,26 +266,30 @@ const Cart = () => {
                     </div>
 
                     <p className="mt-4 flex space-x-2 text-sm text-gray-700">
-                      {product?.stock ? (
-                        <CheckIcon
-                          className="h-5 w-5 flex-shrink-0 text-green-500"
-                          aria-hidden="true"
-                        />
-                      ) : (
-                        <XMarkIcon
-                          className="h-5 w-5 flex-shrink-0 text-red-600"
-                          aria-hidden="true"
-                        />
-                      )}
+                      
 
-                      <span>
-                        {product?.stock ? "In stock" : `Out of stock`}
-                      </span>
+                      
                     </p>
                   </div>
                 </li>
-              ))}
+                )
+})}
             </ul>
+            
+            <button onClick={e=>{
+              e.preventDefault();
+              onSaveItems();
+            }}>Save</button> 
+            <br></br>
+            <button onClick={e=>{
+              e.preventDefault();
+              onDontSave();
+            }}>Don't save</button> 
+            <br></br>
+            <button onClick={e=>{
+              e.preventDefault();
+              onClearAll();
+            }}>Clear all</button>
           </section>
 
           {/* Order summary */}
@@ -140,7 +308,7 @@ const Cart = () => {
               <div className="flex items-center justify-between">
                 <dt className="text-sm text-gray-600">Subtotal</dt>
                 <dd className="text-sm font-medium text-gray-900">
-                  ${subtotal}
+                  {total}đ
                 </dd>
               </div>
               <div className="flex items-center justify-between border-t border-gray-200 pt-4">
@@ -160,7 +328,7 @@ const Cart = () => {
                   </a>
                 </dt>
                 <dd className="text-sm font-medium text-gray-900">
-                  ${subtotal === 0 ? 0 : 5.0}
+                  {total === 0 ? 0 : 5.0}đ
                 </dd>
               </div>
               <div className="flex items-center justify-between border-t border-gray-200 pt-4">
@@ -180,7 +348,7 @@ const Cart = () => {
                   </a>
                 </dt>
                 <dd className="text-sm font-medium text-gray-900">
-                  ${subtotal / 5}
+                  {total / 5}đ
                 </dd>
               </div>
               <div className="flex items-center justify-between border-t border-gray-200 pt-4">
@@ -188,7 +356,7 @@ const Cart = () => {
                   Order total
                 </dt>
                 <dd className="text-base font-medium text-gray-900">
-                  ${subtotal === 0 ? 0 : subtotal + subtotal / 5 + 5}
+                  {total === 0 ? 0 : total + total / 5 + 5}đ
                 </dd>
               </div>
             </dl>
@@ -210,3 +378,7 @@ const Cart = () => {
   );
 };
 export default Cart;
+function err(reason: any): PromiseLike<never> {
+  throw new Error("Function not implemented.");
+}
+
