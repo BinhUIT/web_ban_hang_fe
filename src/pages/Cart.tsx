@@ -41,6 +41,11 @@ const Cart = () => {
               tempMap.set(item.id,item.amount);
             }
             setCartItemAmount(tempMap);
+          }).catch(err=>{
+            toast.error("You have been logged out, please login again");
+            localStorage.removeItem("user");
+            localStorage.removeItem("token");
+            navigate("/login");
           })
         }).catch(err=>{
           toast.error("Error, please reload page");
@@ -275,21 +280,40 @@ async function onClearOne(id:number) {
                 )
 })}
             </ul>
-            
-            <button onClick={e=>{
-              e.preventDefault();
-              onSaveItems();
-            }}>Save</button> 
-            <br></br>
-            <button onClick={e=>{
-              e.preventDefault();
-              onDontSave();
-            }}>Don't save</button> 
-            <br></br>
-            <button onClick={e=>{
-              e.preventDefault();
-              onClearAll();
-            }}>Clear all</button>
+            {cartItems&&cartItems.length>0&&<div>
+            <button
+  onClick={(e) => {
+    e.preventDefault();
+    onSaveItems();
+  }}
+  className="mt-4 px-4 py-2 rounded-xl bg-green-600 text-white hover:bg-green-700 transition"
+>
+  Save
+</button>
+<br />
+
+<button
+  onClick={(e) => {
+    e.preventDefault();
+    onDontSave();
+  }}
+  className="mt-2 px-4 py-2 rounded-xl bg-gray-500 text-white hover:bg-gray-600 transition"
+>
+  Don't save
+</button>
+<br />
+
+<button
+  onClick={(e) => {
+    e.preventDefault();
+    onClearAll();
+  }}
+  className="mt-2 px-4 py-2 rounded-xl bg-red-600 text-white hover:bg-red-700 transition"
+>
+  Clear all
+</button>
+</div>}
+
           </section>
 
           {/* Order summary */}
@@ -327,26 +351,10 @@ async function onClearOne(id:number) {
                     />
                   </a>
                 </dt>
-                <dd className="text-sm font-medium text-gray-900">
-                  {total === 0 ? 0 : 5.0}đ
-                </dd>
+                
               </div>
               <div className="flex items-center justify-between border-t border-gray-200 pt-4">
-                <dt className="flex text-sm text-gray-600">
-                  <span>Tax estimate</span>
-                  <a
-                    href="#"
-                    className="ml-2 flex-shrink-0 text-gray-400 hover:text-gray-500"
-                  >
-                    <span className="sr-only">
-                      Learn more about how tax is calculated
-                    </span>
-                    <QuestionMarkCircleIcon
-                      className="h-5 w-5 text-secondaryBrown"
-                      aria-hidden="true"
-                    />
-                  </a>
-                </dt>
+               
                 <dd className="text-sm font-medium text-gray-900">
                   {total / 5}đ
                 </dd>
@@ -356,12 +364,12 @@ async function onClearOne(id:number) {
                   Order total
                 </dt>
                 <dd className="text-base font-medium text-gray-900">
-                  {total === 0 ? 0 : total + total / 5 + 5}đ
+                  {total === 0 ? 0 : total  + 5}đ
                 </dd>
               </div>
             </dl>
 
-            {productsInCart.length > 0 && (
+            {cartItems.length > 0 && (
               <div className="mt-6">
                 <Link
                   to="/checkout"
