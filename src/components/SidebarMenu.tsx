@@ -107,6 +107,12 @@ const SidebarMenu = ({
             >
               Cart
             </Link>
+            <Link
+              to="/order-history"
+              className="py-2 border-y border-secondaryBrown w-full block flex justify-center"
+            >
+              Order History
+            </Link>
           </div>
         </div>
       )}

@@ -3,6 +3,8 @@ import toast from "react-hot-toast";
 import { Link, useLoaderData, useNavigate } from "react-router-dom";
 import customFetch from "../axios/custom";
 import { formatDate } from "../utils/formatDate";
+import Pagination from "../components/Pagination";
+import { baseURL } from "../axios/baseURL";
 
 export const loader = async () => {
   try {
@@ -14,18 +16,57 @@ export const loader = async () => {
     return [];
   }
 };
-
 const OrderHistory = () => {
   const [user] = useState(JSON.parse(localStorage.getItem("user") || "{}"));
   const orders = useLoaderData() as Order[];
-  
+  const [orderHistories, setOrderHistories] = useState<any[]>([]);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPage, setTotalPage] = useState(0);
   const navigate = useNavigate();
-
+  async function fetchOrderHistory(fetchURL:string) {
+    const token = localStorage.getItem("token");
+    if(!token) {
+      toast.error("Please login to view this page");
+      localStorage.removeItem("user");
+      navigate("/login");
+    }
+    const response = await fetch(fetchURL,{
+      method:"GET",
+      headers:{
+        "Content-type":"application/json",
+        "Authorization":"Bearer " +token
+      }
+    });
+    if(response.status==401) {
+      toast.error("You have been logged out, please login again");
+      localStorage.removeItem("user");
+      localStorage.removeItem("token");
+      navigate("/login");
+    }
+    if(response.status==500) {
+      toast.error("Error, please reload page");
+      return;
+    }
+    if(response.ok) {
+      const data = await response.json();
+      console.log(data);
+      setOrderHistories(data.content);
+      setCurrentPage(data.page.number);
+      setTotalPage(data.page.totalPage);
+    }
+  }
+  async function onPageChange(newPage:number) {
+    const fetchURL=`${baseURL}/user/order-history?page=${newPage}&size=4`;
+    fetchOrderHistory(fetchURL);
+  }
   useEffect(() => {
     if (!user?.id) {
       toast.error("Please login to view this page");
       navigate("/login");
     }
+    const fetchURL = `${baseURL}/user/order-history?page=${currentPage}&size=4`;
+    fetchOrderHistory(fetchURL);
+
   }, [user, navigate]);
 
   return (
@@ -43,15 +84,15 @@ const OrderHistory = () => {
             </tr>
           </thead>
           <tbody>
-            {orders.map((order) => order?.user && order.user.id === user.id && (
+            {orderHistories.map((order) =>  (
               <tr key={order.id}>
                 <td className="py-3 px-4 border-b text-center">{order.id}</td>
-                <td className="py-3 px-4 border-b text-center">{ formatDate(order.orderDate) }</td>
+                <td className="py-3 px-4 border-b text-center">{ formatDate(order.createAt) }</td>
                 <td className="py-3 px-4 border-b text-center">
-                  ${order.subtotal + 5 + (order.subtotal / 5)}
+                  {order.total}đ
                 </td>
                 <td className="py-3 px-4 border-b text-center">
-                  { order.orderStatus }
+                  { order.status }
                 </td>
                 <td className="py-3 px-4 border-b text-center">
                   <Link
@@ -66,6 +107,7 @@ const OrderHistory = () => {
           </tbody>
         </table>
       </div>
+      <Pagination totalPages={totalPage} currentPage={currentPage} onPageChange={onPageChange}></Pagination>
     </div>
   );
 };

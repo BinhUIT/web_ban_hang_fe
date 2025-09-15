@@ -28,6 +28,8 @@ const Cart = () => {
             "Authorization":`Bearer ${token}`
           }
         }).then((response)=>{
+          console.log(response);
+          if(response.body) {
           response.json().then((data)=>{
             console.log(data);
             setCartItems(data.cartItems);
@@ -40,13 +42,13 @@ const Cart = () => {
             for(let item of data.cartItems) {
               tempMap.set(item.id,item.amount);
             }
-            setCartItemAmount(tempMap);
+            setCartItemAmount(tempMap); 
+          
           }).catch(err=>{
-            toast.error("You have been logged out, please login again");
-            localStorage.removeItem("user");
-            localStorage.removeItem("token");
-            navigate("/login");
-          })
+            console.error(err);
+            
+          }) 
+        }
         }).catch(err=>{
           toast.error("Error, please reload page");
         }) 

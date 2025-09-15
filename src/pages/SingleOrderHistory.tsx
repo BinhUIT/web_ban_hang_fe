@@ -4,11 +4,15 @@ import {
   LoaderFunctionArgs,
   useLoaderData,
   useNavigate,
+  useParams,
 } from "react-router-dom";
 import customFetch from "../axios/custom";
 import { nanoid } from "nanoid";
 import { formatDate } from "../utils/formatDate";
-
+import { baseURL } from "../axios/baseURL";
+import Swal from "sweetalert2";
+import withReactContent from "sweetalert2-react-content";
+import Button from "../components/Button";
 export const loader = async ({ params }: LoaderFunctionArgs) => {
   const { id } = params;
   const response = await customFetch(`orders/${id}`);
@@ -19,30 +23,127 @@ const SingleOrderHistory = () => {
   const [user] = useState(JSON.parse(localStorage.getItem("user") || "{}"));
   const navigate = useNavigate();
   const singleOrder = useLoaderData() as Order;
-
-  useEffect(() => {
-    if (!user?.id) {
+  const MySwal = withReactContent(Swal);
+  const {id} = useParams();
+  const [order, setOrder] = useState<any>(null);
+  async function cancelOrder() {
+    const token = localStorage.getItem("token");
+    
+    if(!token) {
+      localStorage.removeItem("user");
       toast.error("Please login to view this page");
       navigate("/login");
     }
-  }, [user, navigate]);
+    const response =await fetch(`${baseURL}/user/cancel-order/${id}`,{
+      method:"PUT",
+      headers:{
+        "Content-type":"application/json",
+        "Authorization":"Bearer "+token
+      }
+    });
+    if(response.status==404){
+      toast.error("Order not found");
+    }
+    if(response.status==400){
+      toast.error("You can not cancel this order");
+      
+    }
+    if(response.status==500) {
+      toast.error("Server error, please reload page");
+    }
+    if(response.status==401) {
+      toast.error("You have been logged out, please login again");
+      localStorage.removeItem("user");
+      localStorage.removeItem("token");
+      navigate("/login");
+    }
+    if(response.ok) {
+      toast.success("Order canceled");
+      fetchOrderById();
+    }
+    
+  }
+  function onClickCancel() {
+    MySwal.fire({
+      title:"Are you sure?",
+      text:"You can not undo this action",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Yes",
+      cancelButtonText: "No",
+    }).then((result)=>{
+      if(result.isConfirmed) {
+        cancelOrder();
+      }
+    })
+  }
+  async function fetchOrderById() {
+    const token = localStorage.getItem("token");
+    if(!id) {
+      return;
+    }
+    if(!token) {
+      localStorage.removeItem("user");
+      toast.error("Please login to view this page");
+      navigate("/login");
+    }
+    const url = `${baseURL}/user/order-by-id/${id}`;
+    const response = await fetch(url,{
+      method:"GET",
+      headers:{
+        "Content-type":"application/json",
+        "Authorization":"Bearer "+token
+      }
+    });
+    if(response.status==404){
+      toast.error("Order not found");
+    }
+    if(response.status==400){
+      toast.error("This is not your order");
+      navigate("/");
+    }
+    if(response.status==500) {
+      toast.error("Server error, please reload page");
+    }
+    if(response.status==401) {
+      toast.error("You have been logged out, please login again");
+      localStorage.removeItem("user");
+      localStorage.removeItem("token");
+      navigate("/login");
+    }
+    if(response.ok) {
+      const data = await response.json();
+      setOrder(data);
+      console.log(data);
+    }
+
+  }
+  useEffect(() => {
+    if (!user?.id) {
+      toast.error("Please login to view this page");
+
+      navigate("/login");
+    }
+    fetchOrderById();
+  }, [user, navigate,id]);
 
   return (
     <div className="max-w-screen-2xl mx-auto pt-20 px-5">
       <h1 className="text-3xl font-bold mb-8">Order Details</h1>
       <div className="bg-white border border-gray-200 p-5 overflow-x-auto">
         <h2 className="text-2xl font-semibold mb-4">
-          Order ID: {singleOrder.id}
+          Order ID: {order?.id}
         </h2>
-        <p className="mb-2">Date: {formatDate(singleOrder.orderDate)}</p>
-        <p className="mb-2">Subtotal: ${ singleOrder.subtotal }</p>
-        <p className="mb-2">Shipping: $5</p>
-        <p className="mb-2">Tax: ${ singleOrder.subtotal / 5 }</p>
+        <p className="mb-2">Date: {formatDate(order?.createAt)}</p>
+        <p className="mb-2">Subtotal: {(order?.total-order?.shipping_fee) }đ</p>
+        <p className="mb-2">Shipping: {order?.shipping_fee} đ</p>
+       
         <p className="mb-2">
-          Total: $
-          {(singleOrder.subtotal + 5 + singleOrder.subtotal / 5).toFixed(2)}
+          Total: {order?.total}đ
         </p>
-        <p className="mb-2">Status: {singleOrder.orderStatus}</p>
+        
+        <p className="mb-2">Status: {order?.status}</p>
+        {order&&order.status=="PENDING"&&<button onClick={onClickCancel}>Cancel</button>}
         <h3 className="text-xl font-semibold mt-6 mb-4">Items</h3>
         <table className="singleOrder-table min-w-full bg-white border border-gray-200">
           <thead>
@@ -53,14 +154,14 @@ const SingleOrderHistory = () => {
             </tr>
           </thead>
           <tbody>
-            {singleOrder.products.map((product) => (
+            {order?.orderItems.map((item:any) => (
               <tr key={nanoid()}>
-                <td className="py-3 px-4 border-b">{product?.title}</td>
+                <td className="py-3 px-4 border-b">{item?.productVariant.name}</td>
                 <td className="py-3 px-4 border-b text-center">
-                  {product?.quantity}
+                  {item?.amount}
                 </td>
                 <td className="py-3 px-4 border-b text-right">
-                  ${product?.price.toFixed(2)}
+                  {item?.totalPrice}đ
                 </td>
               </tr>
             ))}
