@@ -73,7 +73,8 @@ const Checkout = () => {
       });
       if(response.ok) {
         toast.success("Create order success");
-        navigate("/");
+        const orderData= await response.json();
+        navigate("/order-history/"+orderData.id);
       }
       if(response.status==401) {
         toast.error("You have been logged out, please login again");

@@ -26,6 +26,44 @@ const SingleOrderHistory = () => {
   const MySwal = withReactContent(Swal);
   const {id} = useParams();
   const [order, setOrder] = useState<any>(null);
+  async function onClickCheckout() {
+    const tokenExpireAt = localStorage.getItem("token_expire_at");
+    const token = localStorage.getItem("token");
+    if(!tokenExpireAt||!token) {
+      toast.error("Please login again");
+      localStorage.removeItem("user");
+      localStorage.removeItem("token");
+      navigate("/login");
+    }
+    const expireTime = new Date(tokenExpireAt?tokenExpireAt:""); 
+    const now = new Date();
+    if(expireTime<=now) {
+      toast.error("Please login again");
+      localStorage.removeItem("user");
+      localStorage.removeItem("token");
+      navigate("/login");
+    }
+    const response = await fetch(baseURL+"/user/confirm_checkout/"+id,{
+      method:"POST",
+      headers:{
+        "Content-type":"application/json",
+        "Authorization":"Bearer "+token
+      }
+    });
+    if(response.status==404||response.status==400||response.status==500) {
+      toast.error("Error, please try again");
+    } 
+    if(response.status==401) {
+      toast.error("Please login again");
+      localStorage.removeItem("user");
+      localStorage.removeItem("token");
+      navigate("/login");
+    }
+    if(response.ok) {
+      const paymentLink = await response.text();
+      window.location.replace(paymentLink);
+    }
+  }
   async function cancelOrder() {
     const token = localStorage.getItem("token");
     
@@ -143,7 +181,10 @@ const SingleOrderHistory = () => {
         </p>
         
         <p className="mb-2">Status: {order?.status}</p>
-        {order&&order.status=="PENDING"&&<button onClick={onClickCancel}>Cancel</button>}
+        {order&&order.status=="PENDING"&&<button onClick={onClickCancel} className="px-4 py-2 rounded-lg bg-[#7d7668] text-white font-semibold hover:opacity-90 transition">Cancel</button>}
+        <br></br>
+        <br></br>
+        {order&&!order.isPaid&&<button className="px-4 py-2 rounded-lg bg-[#7d7668] text-white font-semibold hover:opacity-90 transition" onClick={onClickCheckout}>Online Check out</button>}
         <h3 className="text-xl font-semibold mt-6 mb-4">Items</h3>
         <table className="singleOrder-table min-w-full bg-white border border-gray-200">
           <thead>
