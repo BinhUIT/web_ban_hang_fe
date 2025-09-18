@@ -166,7 +166,7 @@ const SingleOrderHistory = () => {
       <h1 className="text-3xl font-bold mb-8">Order Details</h1>
       <div className="bg-white border border-gray-200 p-5 overflow-x-auto">
         <h2 className="text-2xl font-semibold mb-4">
-          Order ID: {order?.id}
+          Order Code: {order?.code}
         </h2>
         <p className="mb-2">Date: {formatDate(order?.createAt)}</p>
         <p className="mb-2">Subtotal: {(order?.total-order?.shipping_fee) }đ</p>

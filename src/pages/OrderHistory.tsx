@@ -18,7 +18,7 @@ export const loader = async () => {
 };
 const OrderHistory = () => {
   const [user] = useState(JSON.parse(localStorage.getItem("user") || "{}"));
-  const orders = useLoaderData() as Order[];
+  
   const [orderHistories, setOrderHistories] = useState<any[]>([]);
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPage, setTotalPage] = useState(0);
@@ -52,11 +52,11 @@ const OrderHistory = () => {
       console.log(data);
       setOrderHistories(data.content);
       setCurrentPage(data.page.number);
-      setTotalPage(data.page.totalPage);
+      setTotalPage(data.page.totalPages);
     }
   }
   async function onPageChange(newPage:number) {
-    const fetchURL=`${baseURL}/user/order-history?page=${newPage}&size=4`;
+    const fetchURL=`${baseURL}/user/order-history?page=${newPage-1}&size=4`;
     fetchOrderHistory(fetchURL);
   }
   useEffect(() => {
@@ -107,7 +107,7 @@ const OrderHistory = () => {
           </tbody>
         </table>
       </div>
-      <Pagination totalPages={totalPage} currentPage={currentPage} onPageChange={onPageChange}></Pagination>
+      <Pagination totalPages={totalPage} currentPage={currentPage+1} onPageChange={onPageChange}></Pagination>
     </div>
   );
 };

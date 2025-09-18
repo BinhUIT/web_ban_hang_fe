@@ -44,6 +44,8 @@ const Checkout = () => {
   const isChangeAddressRef= useRef(false);
   const isChangePhoneRef= useRef(false);
   const [user, setUser] = useState<any>(null);
+  const [addressState, setAddressState]= useState("");
+  const [phoneState, setPhoneState] = useState("");
   const navigate = useNavigate();
   function checkToken() {
     const token = localStorage.getItem("token");
@@ -131,10 +133,13 @@ const Checkout = () => {
     if(token) {
       fetchCart(token);
     }
-    const user= loadUser();
-    if(user) {
-      console.log(user);
-      setUser(user);
+    const tempUser= loadUser();
+    if(tempUser) {
+      console.log(tempUser);
+      setUser(tempUser);
+      setAddressState(tempUser.address);
+      setPhoneState(tempUser.phone);
+      
     }
   },[]);
   useEffect(()=>{
@@ -193,12 +198,10 @@ const Checkout = () => {
                            autoComplete="street-address"
                            className="block w-full py-2 indent-2 border-gray-300 outline-none focus:border-gray-400 border border shadow-sm sm:text-sm"
                            required={true}
-                           value = {user?.address}
+                           value = {addressState}
                            onChange={(e)=>{
                             isChangeAddressRef.current=true;
-                             const tempUser = user;
-                          tempUser.address= e.target.value;
-                          setUser(tempUser);
+                            setAddressState(e.target.value)
                            }}
                            />
                      </div>
@@ -214,18 +217,16 @@ const Checkout = () => {
                      </label>
                      <div className="mt-1">
                         <input
-                           type="text"
+                           type="tel"
                            name="phone"
                            id="phone"
                            autoComplete="tel"
                            className="block w-full py-2 indent-2 border-gray-300 outline-none focus:border-gray-400 border border shadow-sm sm:text-sm"
                            required={true}
-                           value={user?.phone}
+                           value={phoneState}
                            onChange={(e)=>{
                             isChangePhoneRef.current=true;
-                             const tempUser = user;
-                          tempUser.phone= e.target.value;
-                          setUser(tempUser);
+                             setPhoneState(e.target.value);
                            }}
                            />
                      </div>
