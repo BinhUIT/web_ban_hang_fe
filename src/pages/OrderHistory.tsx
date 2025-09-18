@@ -76,7 +76,7 @@ const OrderHistory = () => {
         <table className="min-w-full bg-white border border-gray-200">
           <thead>
             <tr>
-              <th className="py-3 px-4 border-b">Order ID</th>
+              <th className="py-3 px-4 border-b">Order Code</th>
               <th className="py-3 px-4 border-b">Date</th>
               <th className="py-3 px-4 border-b">Total</th>
               <th className="py-3 px-4 border-b">Status</th>
@@ -86,7 +86,7 @@ const OrderHistory = () => {
           <tbody>
             {orderHistories.map((order) =>  (
               <tr key={order.id}>
-                <td className="py-3 px-4 border-b text-center">{order.id}</td>
+                <td className="py-3 px-4 border-b text-center">{order.code}</td>
                 <td className="py-3 px-4 border-b text-center">{ formatDate(order.createAt) }</td>
                 <td className="py-3 px-4 border-b text-center">
                   {order.total}đ

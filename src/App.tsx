@@ -79,7 +79,7 @@ const router = createBrowserRouter([
       {
         path: "order-history/:id",
         element: <SingleOrderHistory />,
-        loader: singleOrderLoader
+        
       },
     ],
   },

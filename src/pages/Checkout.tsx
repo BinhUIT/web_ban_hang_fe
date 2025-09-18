@@ -40,7 +40,7 @@ const Checkout = () => {
   const [cartItems, setCartItems] = useState<any[]>([]);
   const [subTotal, setSubTotal]= useState(0);
   const [shippingFee, setShippingFee] = useState(0);
-  const isChangeEmailRef = useRef(false);
+  
   const isChangeAddressRef= useRef(false);
   const isChangePhoneRef= useRef(false);
   const [user, setUser] = useState<any>(null);
@@ -59,7 +59,7 @@ const Checkout = () => {
     const token = checkToken();
     if(token) {
       const requestBody = {
-        email:isChangeEmailRef.current?user.email:null,
+        
         address:isChangeAddressRef.current?user.address:null,
         phone:isChangePhoneRef.current?user.phone:null
       }
@@ -148,7 +148,7 @@ const Checkout = () => {
       setSubTotal(newSubTotal);
       setShippingFee(newShippingFee);
       isChangeAddressRef.current=false;
-      isChangeEmailRef.current=false;
+      
       isChangePhoneRef.current=false;
     }
   },[cartItems])
@@ -170,29 +170,7 @@ const Checkout = () => {
                   Contact information
                </h2>
                <div className="mt-4">
-                  <label
-                     htmlFor="email-address"
-                     className="block text-sm font-medium text-gray-700"
-                     >
-                  Email address
-                  </label>
-                  <div className="mt-1">
-                     <input
-                        type="email"
-                        id="email-address"
-                        name="emailAddress"
-                        autoComplete="email"
-                        className="block w-full py-2 indent-2 border-gray-300 outline-none focus:border-gray-400 border border shadow-sm sm:text-sm"
-                        required={true}
-                        value={user?.email}
-                        onChange={(e)=>{
-                          isChangeEmailRef.current=true;
-                          const tempUser = user;
-                          tempUser.email= e.target.value;
-                          setUser(tempUser);
-                        }}
-                        />
-                  </div>
+                  
                </div>
             </div>
             <div className="mt-10 border-t border-gray-200 pt-10">

@@ -13,16 +13,12 @@ import { baseURL } from "../axios/baseURL";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
 import Button from "../components/Button";
-export const loader = async ({ params }: LoaderFunctionArgs) => {
-  const { id } = params;
-  const response = await customFetch(`orders/${id}`);
-  return response.data;
-};
+
 
 const SingleOrderHistory = () => {
   const [user] = useState(JSON.parse(localStorage.getItem("user") || "{}"));
   const navigate = useNavigate();
-  const singleOrder = useLoaderData() as Order;
+  
   const MySwal = withReactContent(Swal);
   const {id} = useParams();
   const [order, setOrder] = useState<any>(null);
