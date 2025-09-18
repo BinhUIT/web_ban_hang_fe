@@ -32,7 +32,7 @@ const Login = () => {
     }).then(response=>{
       response.json().then(data=>{
         toast.success("You logged in successfully"); 
-        localStorage.setItem("user", JSON.stringify({email:data.user.email,password:"", id: data.user.id,name:data.user.name, address:data.user.address, phone:data.user.phone})); 
+        localStorage.setItem("user", JSON.stringify({email:data.user.email,password:"", id: data.user.id,name:data.user.name, address:data.user.address, phone:data.user.phone, roleId:data.user.role.id})); 
       localStorage.setItem("token",data.token);
       localStorage.setItem("token_expire_at",data.tokenExpireAt);
       store.dispatch(setLoginStatus(true));

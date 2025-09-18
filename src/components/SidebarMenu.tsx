@@ -5,6 +5,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAppSelector } from "../hooks";
 import { setLoginStatus } from "../features/auth/authSlice";
 import { store } from "../store";
+import SideBarList from "./SideBarList";
 
 const SidebarMenu = ({
   isSidebarOpen,
@@ -57,63 +58,7 @@ const SidebarMenu = ({
               FASHION
             </Link>
           </div>
-          <div className="flex flex-col items-center gap-1 mt-7">
-            <Link
-              to="/"
-              className="py-2 border-y border-secondaryBrown w-full block flex justify-center"
-            >
-              Home
-            </Link>
-            <Link
-              to="/shop"
-              className="py-2 border-y border-secondaryBrown w-full block flex justify-center"
-            >
-              Shop
-            </Link>
-            <Link
-              to="/search"
-              className="py-2 border-y border-secondaryBrown w-full block flex justify-center"
-            >
-              Search
-            </Link>
-            {loginStatus ? (
-              <>
-                <button
-                  onClick={logout}
-                  className="py-2 border-y border-secondaryBrown w-full block flex justify-center"
-                >
-                  Logout
-                </button>
-              </>
-            ) : (
-              <>
-                <Link
-                  to="/login"
-                  className="py-2 border-y border-secondaryBrown w-full block flex justify-center"
-                >
-                  Sign in
-                </Link>
-                <Link
-                  to="/register"
-                  className="py-2 border-y border-secondaryBrown w-full block flex justify-center"
-                >
-                  Sign up
-                </Link>
-              </>
-            )}
-            <Link
-              to="/cart"
-              className="py-2 border-y border-secondaryBrown w-full block flex justify-center"
-            >
-              Cart
-            </Link>
-            <Link
-              to="/order-history"
-              className="py-2 border-y border-secondaryBrown w-full block flex justify-center"
-            >
-              Order History
-            </Link>
-          </div>
+          <SideBarList></SideBarList>
         </div>
       )}
     </>

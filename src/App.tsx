@@ -1,4 +1,4 @@
-import { RouterProvider, createBrowserRouter } from "react-router-dom";
+import { RouterProvider, createBrowserRouter, redirect } from "react-router-dom";
 import {
   Cart,
   Checkout,
@@ -17,12 +17,51 @@ import {
 import { checkoutAction, searchAction } from "./actions/index";
 import { shopCategoryLoader } from "./pages/Shop";
 import { loader as orderHistoryLoader } from "./pages/OrderHistory";
-import { loader as singleOrderLoader } from "./pages/SingleOrderHistory";
+
+import OrderManagement from "./pages/OrderManagement";
+import toast from "react-hot-toast";
+function redirectToLogin() {
+  toast.error("You have no permission");
+  localStorage.removeItem("user");
+  localStorage.removeItem("token");
+  localStorage.removeItem("tokenExpireAt");
+  return redirect("/login");
+}
+async function loaderForAdminAndUser() {
+   const userJSON = localStorage.getItem("user");
+  if(!userJSON) {
+    return redirectToLogin();
+  } 
+  return null;
+}
+async function adminLoader() {
+  const userJSON = localStorage.getItem("user");
+  if(!userJSON) {
+    return redirectToLogin();
+  } 
+  const user = JSON.parse(userJSON);
+  if(user.roleId!=1) {
+    return redirectToLogin();
+  }
+  return null;
+} 
+async function userLoader() {
+  const userJSON = localStorage.getItem("user");
+  if(!userJSON) {
+    return redirectToLogin();
+  } 
+  const user = JSON.parse(userJSON);
+  if(user.roleId!=2) {
+    return redirectToLogin();
+  }
+  return null;
+}
 
 const router = createBrowserRouter([
   {
     path: "/",
     element: <HomeLayout />,
+    
     children: [
       {
         index: true,
@@ -44,11 +83,13 @@ const router = createBrowserRouter([
       {
         path: "cart",
         element: <Cart />,
+        loader: userLoader
       },
       {
         path: "checkout",
         element: <Checkout />,
         action: checkoutAction,
+        loader: userLoader
       },
       {
         path: "search",
@@ -66,21 +107,29 @@ const router = createBrowserRouter([
       {
         path: "order-confirmation",
         element: <OrderConfirmation />,
+        loader:userLoader
       },
       {
         path: "user-profile",
         element: <UserProfile />,
+        loader:loaderForAdminAndUser
       },
       {
         path: "order-history",
         element: <OrderHistory />,
-        loader: orderHistoryLoader,
+        loader: userLoader,
       },
       {
         path: "order-history/:id",
         element: <SingleOrderHistory />,
+        loader:userLoader
         
       },
+      {
+        path: "order_management",
+        element:<OrderManagement/>, 
+        loader:adminLoader
+      }
     ],
   },
 ]);
