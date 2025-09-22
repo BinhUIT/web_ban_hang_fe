@@ -40,7 +40,7 @@ const Checkout = () => {
   const [cartItems, setCartItems] = useState<any[]>([]);
   const [subTotal, setSubTotal]= useState(0);
   const [shippingFee, setShippingFee] = useState(0);
-  
+  const [checkOutType, setCheckOutType] = useState("COD");
   const isChangeAddressRef= useRef(false);
   const isChangePhoneRef= useRef(false);
   const [user, setUser] = useState<any>(null);
@@ -61,7 +61,7 @@ const Checkout = () => {
     const token = checkToken();
     if(token) {
       const requestBody = {
-        
+        paymentType:checkOutType,
         address:isChangeAddressRef.current?user.address:null,
         phone:isChangePhoneRef.current?user.phone:null
       }
@@ -75,8 +75,13 @@ const Checkout = () => {
       });
       if(response.ok) {
         toast.success("Create order success");
-        const orderData= await response.json();
-        navigate("/order-history/"+orderData.id);
+        const data = await response.json()
+        if(data.message=="Success") {
+         navigate("/order-history/"+data.orderId);
+        }
+        else {
+         window.location.replace(data.message);
+        }
       }
       if(response.status==401) {
         toast.error("You have been logged out, please login again");
@@ -160,7 +165,7 @@ const Checkout = () => {
   return (
     <div className="mx-auto max-w-screen-2xl">
    <div className="pb-24 pt-16 px-5 max-[400px]:px-3">
-      <h2 className="sr-only">Checkout</h2>
+      <h2 className="sr-only">Create Order</h2>
       <form
          onSubmit={(e)=>
          {
@@ -233,115 +238,35 @@ const Checkout = () => {
                   </div>
                </div>
             </div>
-            {/* Payment */}
-            {/*<div className="mt-10 border-t border-gray-200 pt-10">
-               <h2 className="text-lg font-medium text-gray-900">Payment</h2>
-               <fieldset className="mt-4">
-                  <legend className="sr-only">Payment type</legend>
-                  <div className="space-y-4 sm:flex sm:items-center sm:space-x-10 sm:space-y-0">
-                     {paymentMethods.map((paymentMethod, paymentMethodIdx) => (
-                     <div key={paymentMethod.id} className="flex items-center">
-                        {paymentMethodIdx === 0 ? (
-                        <input
-                           id={paymentMethod.id}
-                           name="paymentType"
-                           type="radio"
-                           defaultChecked
-                           className="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                           />
-                        ) : (
-                        <input
-                           id={paymentMethod.id}
-                           name="paymentType"
-                           type="radio"
-                           className="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                           />
-                        )}
-                        <label
-                           htmlFor={paymentMethod.id}
-                           className="ml-3 block text-sm font-medium text-gray-700"
-                           >
-                        {paymentMethod.title}
-                        </label>
-                     </div>
-                     ))}
-                  </div>
-               </fieldset>
-               <div className="mt-6 grid grid-cols-4 gap-x-4 gap-y-6">
-                  <div className="col-span-4">
-                     <label
-                        htmlFor="card-number"
-                        className="block text-sm font-medium text-gray-700"
-                        >
-                     Card number
-                     </label>
-                     <div className="mt-1">
-                        <input
-                           type="text"
-                           id="card-number"
-                           name="cardNumber"
-                           autoComplete="cc-number"
-                           className="block w-full py-2 indent-2 border-gray-300 outline-none focus:border-gray-400 border border shadow-sm sm:text-sm"
-                           required={true}
-                           />
-                     </div>
-                  </div>
-                  <div className="col-span-4">
-                     <label
-                        htmlFor="name-on-card"
-                        className="block text-sm font-medium text-gray-700"
-                        >
-                     Name on card
-                     </label>
-                     <div className="mt-1">
-                        <input
-                           type="text"
-                           id="name-on-card"
-                           name="nameOnCard"
-                           autoComplete="cc-name"
-                           className="block w-full py-2 indent-2 border-gray-300 outline-none focus:border-gray-400 border border shadow-sm sm:text-sm"
-                           required={true}
-                           />
-                     </div>
-                  </div>
-                  <div className="col-span-3">
-                     <label
-                        htmlFor="expiration-date"
-                        className="block text-sm font-medium text-gray-700"
-                        >
-                     Expiration date (MM/YY)
-                     </label>
-                     <div className="mt-1">
-                        <input
-                           type="text"
-                           name="expirationDate"
-                           id="expiration-date"
-                           autoComplete="cc-exp"
-                           className="block w-full py-2 indent-2 border-gray-300 outline-none focus:border-gray-400 border border shadow-sm sm:text-sm"
-                           required={true}
-                           />
-                     </div>
-                  </div>
-                  <div>
-                     <label
-                        htmlFor="cvc"
-                        className="block text-sm font-medium text-gray-700"
-                        >
-                     CVC
-                     </label>
-                     <div className="mt-1">
-                        <input
-                           type="text"
-                           name="cvc"
-                           id="cvc"
-                           autoComplete="csc"
-                           className="block w-full py-2 indent-2 border-gray-300 outline-none focus:border-gray-400 border border shadow-sm sm:text-sm"
-                           required={true}
-                           />
-                     </div>
-                  </div>
+            <div>
+               <label className="block text-sm font-medium text-gray-700">Choose checkout type:</label>
+               <br></br>
+               <div>
+               <div>
+               <input type="checkbox" id={"COD"} value={"COD"} checked={checkOutType=="COD"} onChange={(e)=>{
+                  if(e.target.checked){
+                     setCheckOutType("COD");
+                  } 
+                  else {
+                     setCheckOutType("ONLINE");
+                  }
+               }}/>
+               <label htmlFor="online">Cost On Delivery</label>
                </div>
-            </div>*/}
+               <div>
+                  <input type="checkbox" id={"online"} value={"ONLINE"} checked = {checkOutType=="ONLINE"} onChange={(e)=>{
+                     if(e.target.checked){
+                     setCheckOutType("ONLINE");
+                  } 
+                  else {
+                     setCheckOutType("COD");
+                  }
+                  }}/>
+               <label htmlFor="online">Online</label>
+               </div>
+               </div>
+            </div>
+            
          </div>
          {/* Order summary */}
          <div className="mt-10 lg:mt-0">

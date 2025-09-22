@@ -22,7 +22,7 @@ const SingleOrderHistory = () => {
   const MySwal = withReactContent(Swal);
   const {id} = useParams();
   const [order, setOrder] = useState<any>(null);
-  async function onClickCheckout() {
+  function checkToken() {
     const tokenExpireAt = localStorage.getItem("token_expire_at");
     const token = localStorage.getItem("token");
     if(!tokenExpireAt||!token) {
@@ -39,11 +39,16 @@ const SingleOrderHistory = () => {
       localStorage.removeItem("token");
       navigate("/login");
     }
-    const response = await fetch(baseURL+"/user/confirm_checkout/"+id,{
+    return token;
+  }
+  
+  async function onClickCheckout(checkoutType:string) {
+    const token = checkToken()
+    const response = await fetch(baseURL+"/user/"+checkoutType+"/"+id,{
       method:"POST",
       headers:{
         "Content-type":"application/json",
-        "Authorization":"Bearer "+token
+        "Authorization":"Bearer "+(token?token:"")
       }
     });
     if(response.status==404||response.status==400||response.status==500) {
@@ -60,6 +65,7 @@ const SingleOrderHistory = () => {
       window.location.replace(paymentLink);
     }
   }
+  
   async function cancelOrder() {
     const token = localStorage.getItem("token");
     
@@ -169,8 +175,11 @@ const SingleOrderHistory = () => {
           Order Code: {order?.code}
         </h2>
         <p className="mb-2">Date: {formatDate(order?.createAt)}</p>
+        <p className="mb-2">Origin Price: {(order?.originPrice)} đ</p>
+        <p className="mb-2">Discount: {(order?.discount)} đ</p>
         <p className="mb-2">Subtotal: {(order?.total-order?.shipping_fee) }đ</p>
         <p className="mb-2">Shipping: {order?.shipping_fee} đ</p>
+       
        
         <p className="mb-2">
           Total: {order?.total}đ
@@ -180,7 +189,14 @@ const SingleOrderHistory = () => {
         {order&&order.status=="PENDING"&&<button onClick={onClickCancel} className="px-4 py-2 rounded-lg bg-[#7d7668] text-white font-semibold hover:opacity-90 transition">Cancel</button>}
         <br></br>
         <br></br>
-        {order&&!order.isPaid&&<button className="px-4 py-2 rounded-lg bg-[#7d7668] text-white font-semibold hover:opacity-90 transition" onClick={onClickCheckout}>Online Check out</button>}
+        {order&&!order.isCreatePayment&&<div>
+          <button className="px-4 py-2 rounded-lg bg-[#7d7668] text-white font-semibold hover:opacity-90 transition" onClick={(e)=>{
+            onClickCheckout("confirm_checkout_online");
+          }}>Online Check out</button>
+          <button className="px-4 py-2 rounded-lg bg-[#7d7668] text-white font-semibold hover:opacity-90 transition" onClick={(e)=>{
+            onClickCheckout("confirm_cod");
+          }}>Cost on Delivery</button>
+        </div>}
         <h3 className="text-xl font-semibold mt-6 mb-4">Items</h3>
         <table className="singleOrder-table min-w-full bg-white border border-gray-200">
           <thead>
