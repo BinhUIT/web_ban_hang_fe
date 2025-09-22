@@ -46,6 +46,9 @@ const Checkout = () => {
   const [user, setUser] = useState<any>(null);
   const [addressState, setAddressState]= useState("");
   const [phoneState, setPhoneState] = useState("");
+  const [discount, setDiscount] = useState<any>(null);
+  const [discountChecked, setDiscountChecked] = useState<any>(null);
+  const [couponCodeInput, setCouponCodeInput] = useState("");
   const navigate = useNavigate();
   function checkToken() {
     const token = localStorage.getItem("token");
@@ -56,6 +59,11 @@ const Checkout = () => {
       
     } 
     return token;
+  }
+  function calculateDiscount(discount:any, price:number) {
+   if(discount.discountType=="FIXED")  
+      return discount.discount;
+   return price*discount.discount;
   }
   async function onCheckOut() {
     const token = checkToken();
@@ -266,6 +274,35 @@ const Checkout = () => {
                </div>
                </div>
             </div>
+            <div>
+               <label className="block text-sm font-medium text-gray-700">Enter coupon code: </label> 
+               <br></br>
+               <input type="text" className="block w-full py-2 indent-2 border-gray-300 outline-none focus:border-gray-400 border border shadow-sm sm:text-sm" value={couponCodeInput} onChange={(e)=>{
+                  setCouponCodeInput(e.target.value);
+               }}/>
+               <div>
+                  <button onClick={async (e)=>{
+                     e.preventDefault();
+                     const response = await fetch(baseURL+"/unsecure/check_coupon?couponCode="+couponCodeInput+"&price="+subTotal);
+                     if(response.ok) {
+                        const data = await response.json();
+                        if(data.message=="You can use this coupon") {
+                           toast.success(data.message);
+                           setDiscountChecked(data.coupon);
+                           console.log(data.coupon);
+                        }
+                        else {
+                           toast.error(data.message);
+                        }
+                     }
+                  }}>Check</button>
+
+                  {discountChecked&&<button onClick = {(e)=>{
+                     e.preventDefault();
+                     setDiscount(discountChecked);
+                  }}>Apply</button>}
+               </div>
+            </div>
             
          </div>
          {/* Order summary */}
@@ -337,11 +374,17 @@ const Checkout = () => {
                      </dd>
                   </div>
                   <div className="flex items-center justify-between">
+                     <dt className="text-sm">Discount</dt>
+                     <dd className="text-sm font-medium text-gray-900">
+                      {discount==null?0:calculateDiscount(discount, subTotal)}đ 
+                     </dd>
+                  </div>
+                  <div className="flex items-center justify-between">
                   </div>
                   <div className="flex items-center justify-between border-t border-gray-200 pt-6">
                      <dt className="text-base font-medium">Total</dt>
                      <dd className="text-base font-medium text-gray-900">
-                      {subTotal+shippingFee}đ
+                      {subTotal+shippingFee-(discount==null?0:calculateDiscount(discount, subTotal))}đ
                      </dd>
                   </div>
                </dl>
