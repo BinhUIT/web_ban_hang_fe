@@ -1,7 +1,33 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { adminGetProductsURL } from "../axios/api_urls";
+import { formatPrice } from "../utils/formatPriceString";
+import Pagination from "../components/Pagination";
+import { Link } from "react-router-dom";
 const ProductManagement = () =>{
+    const [totalPage, setTotalPage] = useState(0);
+    const [currentPage, setCurrentPage] = useState(0);
+    const [listProducts, setListProducts] = useState<any[]>();
+    async function getProducts(currentPage:number) {
+        const url = adminGetProductsURL(12,currentPage);
+        const response = await fetch(url);
+        if(response.ok) {
+            const data= await response.json();
+            setListProducts(data.content);
+            setTotalPage(data.page.totalPages);
+            setCurrentPage(data.page.number);
+            console.log(data);
+        }
+    }
+    useEffect(()=>{
+        getProducts(0);
+    },[])
+    async function onPageChange(page:number) {
+        getProducts(page-1);
+
+    }
+    return (
     <div className="max-w-screen-2xl mx-auto pt-20 px-5">
-        <h1 className="text-3xl font-bold mb-8">Order Mangement</h1>
+        <h1 className="text-3xl font-bold mb-8">Product Management</h1>
         <div className="overflow-x-auto">
             <table className="min-w-full bg-white border border-gray-200">
             <thead>
@@ -13,9 +39,27 @@ const ProductManagement = () =>{
                 <th className="py-3 px-4 border-b">Min Price</th>
                 <th className="py-3 px-4 border-b">Sold</th> 
                 <th className="py-3 px-4 border-b">Quantity</th>
+                <th className="py-3 px-4 border-b">Action</th>
                 </tr>
             </thead>
             <tbody>
+                {listProducts?.map((item)=>(
+                    <tr key={item.id}>
+                        <td className="py-3 px-4 border-b text-center">{item.code}</td>
+                        <td className="py-3 px-4 border-b text-center">{item.name}</td>
+                        <td className="py-3 px-4 border-b text-center">{item.shortDesc}</td> 
+                        <td className="py-3 px-4 border-b text-center">{formatPrice(item.maxPrice)}</td> 
+                        <td className="py-3 px-4 border-b text-center">{formatPrice(item.minPrice)}</td> 
+                        <td className="py-3 px-4 border-b text-center">{item.sold}</td>
+                        <td className="py-3 px-4 border-b text-center">
+                            {item.quantity}
+                        </td>
+                        <td className="py-3 px-4 border-b text-center"><Link to={`/product_detail/${item.id}`} className="text-blue-500 hover:underline">View Details</Link></td>
+
+                    </tr>
+                )
+                    
+                )}
                 {/*orders.map((order) =>  (
                 <tr key={order.id}>
                     <td className="py-3 px-4 border-b text-center">{order.code}</td>
@@ -39,7 +83,8 @@ const ProductManagement = () =>{
             </tbody>
             </table>
         </div>
-        {/*<Pagination totalPages={totalPage} currentPage={currentPage+1} onPageChange={onPageChange}></Pagination>*/}
+        <Pagination totalPages={totalPage} currentPage={currentPage+1} onPageChange={onPageChange}></Pagination>
         </div>
+    );
 }
 export default ProductManagement;

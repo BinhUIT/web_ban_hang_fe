@@ -18,3 +18,9 @@ export const userConfirmReceiveURL = (id:number) => {
 export const adminGetUserURL = (size:number, num:number) =>{
     return `${baseURL}/admin/all_user?size=${size}&number=${num}`;
 }
+export const adminGetProductsURL = (size:number, num:number) => {
+    return `${baseURL}/unsecure/all_enable_products?page=${num}&size=${size}`;
+}
+export const getProductByIdURL= (id:number) =>{
+    return `${baseURL}/unsecure/product/${id}`;
+}
