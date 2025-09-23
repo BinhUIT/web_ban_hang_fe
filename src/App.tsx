@@ -21,6 +21,7 @@ import { loader as orderHistoryLoader } from "./pages/OrderHistory";
 import OrderManagement from "./pages/OrderManagement";
 import toast from "react-hot-toast";
 import SingleOrderManagement from "./pages/SingleOrderManagement";
+import UserManagement from "./pages/UserManagement";
 function redirectToLogin() {
   toast.error("You have no permission");
   localStorage.removeItem("user");
@@ -134,6 +135,11 @@ const router = createBrowserRouter([
       {
         path:"order_management/:id",
         element: <SingleOrderManagement/>,
+        loader:adminLoader
+      }, 
+      {
+        path:"user_management",
+        element: <UserManagement/>,
         loader:adminLoader
       }
     ],

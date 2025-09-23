@@ -15,3 +15,6 @@ export const adminShipOrderURL = (id:number) =>{
 export const userConfirmReceiveURL = (id:number) => {
     return `${baseURL}/user/received_order/${id}`;
 }
+export const adminGetUserURL = (size:number, num:number) =>{
+    return `${baseURL}/admin/all_user?size=${size}&number=${num}`;
+}
