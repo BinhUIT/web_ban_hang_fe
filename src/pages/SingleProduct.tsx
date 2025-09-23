@@ -63,6 +63,11 @@ const SingleProduct = () => {
   useEffect(() => {
     const fetchSingleProduct = async () => {
       const response = await fetch(`${baseURL}/unsecure/product/${params.id}`);
+      if(response.status==404) {
+        toast.error("Product does not exist");
+        navigate("/");
+        return;
+      }
       const data = await response.json();
       setSingleProduct(data);
       setCurrentPrice(`${data?.minPrice}đ - ${data?.maxPrice}đ`);
