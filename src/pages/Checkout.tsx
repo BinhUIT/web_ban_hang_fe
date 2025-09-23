@@ -69,6 +69,7 @@ const Checkout = () => {
     const token = checkToken();
     if(token) {
       const requestBody = {
+      couponCode: discount.code,
         paymentType:checkOutType,
         address:isChangeAddressRef.current?user.address:null,
         phone:isChangePhoneRef.current?user.phone:null

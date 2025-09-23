@@ -9,7 +9,7 @@ const OrderManagement = () =>{
     }
     return (
         <div className="max-w-screen-2xl mx-auto pt-20 px-5">
-        <h1 className="text-3xl font-bold mb-8">Order History</h1>
+        <h1 className="text-3xl font-bold mb-8">Order Mangement</h1>
         <div className="overflow-x-auto">
             <table className="min-w-full bg-white border border-gray-200">
             <thead>
