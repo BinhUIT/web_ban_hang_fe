@@ -13,6 +13,8 @@ import { baseURL } from "../axios/baseURL";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
 import Button from "../components/Button";
+import { clearLocalStorage } from "../utils/clearLocalStorage";
+import { userConfirmReceiveURL } from "../axios/api_urls";
 
 
 const SingleOrderHistory = () => {
@@ -117,6 +119,32 @@ const SingleOrderHistory = () => {
       }
     })
   }
+  async function confirmReceivedOrder() {
+    const token = checkToken();
+    if(!token) {
+      toast.error("You have been log out, please login again");
+      clearLocalStorage();
+      navigate("/login");
+    }
+    const url = userConfirmReceiveURL(id?parseInt(id):-1);
+    const response = await fetch(url,{
+               method:"PUT",
+               headers:{
+                   "Content-type":"application/json",
+                   "Authorization":`Bearer ${token}`
+               }
+           });
+          if(response.status==401) {
+            toast.error("You have been logout, please login again");
+            clearLocalStorage();
+            navigate("/login");
+            return;
+          }
+          if(response.ok) {
+            toast.success("You received order");
+            navigate("/order-history/"+id);
+          }
+  }
   async function fetchOrderById() {
     const token = localStorage.getItem("token");
     if(!id) {
@@ -187,6 +215,7 @@ const SingleOrderHistory = () => {
         
         <p className="mb-2">Status: {order?.status}</p>
         {order&&order.status=="PENDING"&&<button onClick={onClickCancel} className="px-4 py-2 rounded-lg bg-[#7d7668] text-white font-semibold hover:opacity-90 transition">Cancel</button>}
+        {order&&order.status=="SHIPPING"&&<button onClick={confirmReceivedOrder} className="px-4 py-2 rounded-lg bg-[#7d7668] text-white font-semibold hover:opacity-90 transition">Received Order</button>}
         <br></br>
         <br></br>
         {order&&!order.isCreatePayment&&<div>
