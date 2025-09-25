@@ -24,6 +24,9 @@ import SingleOrderManagement from "./pages/SingleOrderManagement";
 import UserManagement from "./pages/UserManagement";
 import ProductManagement from "./pages/ProductManagement";
 import ProductDetail from "./pages/ProductDetail";
+import AddProduct from "./pages/AddProduct";
+import AddVariant from "./pages/AddVariant";
+import UpdateProduct from "./pages/UpdateProduct";
 function redirectToLogin() {
   toast.error("You have no permission");
   localStorage.removeItem("user");
@@ -152,6 +155,21 @@ const router = createBrowserRouter([
       {
         path:"product_detail/:id",
         element:<ProductDetail/>,
+        loader:adminLoader
+      }, 
+      {
+        path:"add_product",
+        element:<AddProduct/>,
+        loader:adminLoader
+      },
+      {
+        path:"add_variant/:id",
+        element:<AddVariant/>,
+        loader:adminLoader
+      },
+      {
+        path:"update_product/:id",
+        element:<UpdateProduct/>,
         loader:adminLoader
       }
     ],

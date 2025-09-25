@@ -2,20 +2,40 @@ import React, { useEffect, useState } from "react";
 import { adminGetProductsURL } from "../axios/api_urls";
 import { formatPrice } from "../utils/formatPriceString";
 import Pagination from "../components/Pagination";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { checkToken } from "../utils/checkToken";
+import toast from "react-hot-toast";
+import { clearLocalStorage } from "../utils/clearLocalStorage";
+import { onTokenExpire } from "../utils/onTokenExpire";
 const ProductManagement = () =>{
     const [totalPage, setTotalPage] = useState(0);
     const [currentPage, setCurrentPage] = useState(0);
     const [listProducts, setListProducts] = useState<any[]>();
+    const navigate= useNavigate();
     async function getProducts(currentPage:number) {
         const url = adminGetProductsURL(12,currentPage);
-        const response = await fetch(url);
+         const token= checkToken();
+    if(!token) {
+        onTokenExpire(navigate);
+        return;
+    }
+        const response = await fetch(url,{
+            method:"GET",
+            headers:{
+                "Content-type":"application/json",
+                "Authorization":"Bearer "+token
+            }
+        });
         if(response.ok) {
             const data= await response.json();
             setListProducts(data.content);
             setTotalPage(data.page.totalPages);
             setCurrentPage(data.page.number);
             console.log(data);
+        }
+        else {
+            onTokenExpire(navigate);
+        return;
         }
     }
     useEffect(()=>{
@@ -27,7 +47,15 @@ const ProductManagement = () =>{
     }
     return (
     <div className="max-w-screen-2xl mx-auto pt-20 px-5">
-        <h1 className="text-3xl font-bold mb-8">Product Management</h1>
+        <div className="flex items-center justify-between mb-8">
+    <h1 className="text-3xl font-bold">Product Management</h1>
+    <Link
+      to="/add_product"
+      className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow"
+    >
+      + Add Product
+    </Link>
+  </div>
         <div className="overflow-x-auto">
             <table className="min-w-full bg-white border border-gray-200">
             <thead>

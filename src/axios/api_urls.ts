@@ -19,8 +19,13 @@ export const adminGetUserURL = (size:number, num:number) =>{
     return `${baseURL}/admin/all_user?size=${size}&number=${num}`;
 }
 export const adminGetProductsURL = (size:number, num:number) => {
-    return `${baseURL}/unsecure/all_enable_products?page=${num}&size=${size}`;
+    return `${baseURL}/admin/all_product?page=${num}&size=${size}`;
 }
 export const getProductByIdURL= (id:number) =>{
     return `${baseURL}/unsecure/product/${id}`;
 }
+export const getCategoryURL = `${baseURL}/unsecure/category`;
+export const createProdutURL = `${baseURL}/admin/create_product`;
+export const getSizeAndColor = `${baseURL}/unsecure/sizes_colors`;
+export const createVariantURL =(id:number) => `${baseURL}/admin/add_variant/${id}`;
+export const updateProductURL = (id:number)=>`${baseURL}/admin/update_product/${id}`;

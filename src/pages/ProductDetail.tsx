@@ -79,7 +79,21 @@ export default function ProductDetail() {
       </div>
 
       {/* Danh sách biến thể */}
-      <h3 className="text-xl font-semibold mt-8 mb-4">Product Variants</h3>
+      <div className="flex items-center justify-between mt-8 mb-4">
+  <h3 className="text-xl font-semibold">Product Variants</h3>
+   <button
+      onClick={() => navigate("/update_product/" + id)}
+      className="bg-green-500 hover:bg-green-600 text-white text-sm font-semibold px-4 py-2 rounded-lg shadow"
+    >
+      Update Product
+    </button>
+  <button
+    onClick={() => navigate("/add_variant/"+id)}
+    className="bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold px-4 py-2 rounded-lg shadow"
+  >
+    + Add Variant
+  </button>
+</div>
       <div className="overflow-x-auto">
         <table className="w-full border-collapse">
           <thead>
