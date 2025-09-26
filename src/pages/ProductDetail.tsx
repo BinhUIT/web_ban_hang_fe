@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { baseURL } from "../axios/baseURL";
 import { useNavigate, useParams } from "react-router-dom";
-import { getProductByIdURL } from "../axios/api_urls";
+import { deleteProductVariantURL, getProductByIdURL } from "../axios/api_urls";
 import toast from "react-hot-toast";
+import Swal from "sweetalert2";
+import { checkToken } from "../utils/checkToken";
+import { onTokenExpire } from "../utils/onTokenExpire";
 
 export default function ProductDetail() {
     const [product, setProduct] = useState<any>(null);
@@ -24,7 +27,52 @@ export default function ProductDetail() {
     }
     useEffect(()=>{
         getProduct();
-    },[])
+    },[]);
+    async function deleteVariant(id:number) {
+      const token = checkToken();
+        if(!token) {
+            onTokenExpire(navigate);
+            return;
+        }
+        const response = await fetch(deleteProductVariantURL(id),{
+            method:"DELETE",
+            headers:{
+                "Content-type":"application/json",
+                "Authorization":"Bearer "+token
+            }
+        });
+        if(response.ok) {
+            toast.success("Deleted product variant");
+            setTimeout(() => {
+  navigate(0);  // hoặc window.location.reload()
+}, 1500);
+            
+            return;
+        } 
+        else {
+            if(response.status==401) {
+                onTokenExpire(navigate);
+                return;
+            }
+            const data= await response.json();
+            toast.error(data.message);
+            return;
+        }
+    }
+    async function handleDeleteVariant(id:number) {
+      const result = await Swal.fire({
+          title: "Are you sure?",
+          text: "This action cannot be undone.",
+          icon: "warning",
+          showCancelButton: true,
+          confirmButtonColor: "#d33",
+          cancelButtonColor: "#3085d6",
+          confirmButtonText: "Yes, delete it!",
+        });
+        if(result.isConfirmed) {
+          deleteVariant(id);
+        }
+    }
   return (
     <div className="p-6 bg-white rounded-2xl shadow-md">
       {/* Thông tin sản phẩm */}
@@ -97,45 +145,61 @@ export default function ProductDetail() {
       <div className="overflow-x-auto">
         <table className="w-full border-collapse">
           <thead>
-            <tr className="bg-gray-50 text-left">
-              <th className="p-3">Image</th>
-              <th className="p-3">Code</th>
-              <th className="p-3">Name</th>
-              <th className="p-3">Color</th>
-              <th className="p-3">Size</th>
-              <th className="p-3">Price</th>
-              <th className="p-3">Quantity</th>
-              <th className="p-3">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {product?.productVariants?.map((v:any) => (
-              <tr key={v.id} className="border-t">
-                <td className="p-3">
-                  <img
-                    src={baseURL+"/"+v.image}
-                    alt={v.name}
-                    className="w-16 h-16 object-cover rounded-lg"
-                  />
-                </td>
-                <td className="p-3">{v.code}</td>
-                <td className="p-3">{v.name}</td>
-                <td className="p-3">{v.productColor.color}</td>
-                <td className="p-3">{v.productSize.productSize}</td>
-                <td className="p-3">
-                  {v.price.toLocaleString("vi-VN")}đ
-                </td>
-                <td className="p-3">{v.quantity}</td>
-                <td
-                  className={`p-3 font-semibold ${
-                    v.status === "ENABLE" ? "text-green-600" : "text-red-500"
-                  }`}
-                >
-                  {v.status}
-                </td>
-              </tr>
-            ))}
-          </tbody>
+  <tr className="bg-gray-50 text-left">
+    <th className="p-3">Image</th>
+    <th className="p-3">Code</th>
+    <th className="p-3">Name</th>
+    <th className="p-3">Color</th>
+    <th className="p-3">Size</th>
+    <th className="p-3">Price</th>
+    <th className="p-3">Quantity</th>
+    <th className="p-3">Status</th>
+    <th className="p-3 text-center">Actions</th> {/* Thêm cột mới */}
+  </tr>
+</thead>
+<tbody>
+  {product?.productVariants?.map((v: any) => (
+    <tr key={v.id} className="border-t">
+      <td className="p-3">
+        <img
+          src={baseURL + "/" + v.image}
+          alt={v.name}
+          className="w-16 h-16 object-cover rounded-lg"
+        />
+      </td>
+      <td className="p-3">{v.code}</td>
+      <td className="p-3">{v.name}</td>
+      <td className="p-3">{v.productColor.color}</td>
+      <td className="p-3">{v.productSize.productSize}</td>
+      <td className="p-3">{v.price.toLocaleString("vi-VN")}đ</td>
+      <td className="p-3">{v.quantity}</td>
+      <td
+        className={`p-3 font-semibold ${
+          v.status === "ENABLE" ? "text-green-600" : "text-red-500"
+        }`}
+      >
+        {v.status}
+      </td>
+
+      {/* Cột Action */}
+      <td className="p-3 flex gap-2 justify-center">
+        <button
+          onClick={() => navigate(`/update_variant/${v.id}`)}
+          className="bg-yellow-500 hover:bg-yellow-600 text-white text-xs font-semibold px-3 py-1 rounded-lg shadow"
+        >
+          Update
+        </button>
+        <button
+          onClick={() => handleDeleteVariant(v.id)}
+          className="bg-red-500 hover:bg-red-600 text-white text-xs font-semibold px-3 py-1 rounded-lg shadow"
+        >
+          Delete
+        </button>
+      </td>
+    </tr>
+  ))}
+</tbody>
+
         </table>
       </div>
     </div>

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { adminGetProductsURL } from "../axios/api_urls";
+import { adminGetProductsURL, deleteProductURL } from "../axios/api_urls";
 import { formatPrice } from "../utils/formatPriceString";
 import Pagination from "../components/Pagination";
 import { Link, useNavigate } from "react-router-dom";
@@ -7,6 +7,7 @@ import { checkToken } from "../utils/checkToken";
 import toast from "react-hot-toast";
 import { clearLocalStorage } from "../utils/clearLocalStorage";
 import { onTokenExpire } from "../utils/onTokenExpire";
+import Swal from "sweetalert2";
 const ProductManagement = () =>{
     const [totalPage, setTotalPage] = useState(0);
     const [currentPage, setCurrentPage] = useState(0);
@@ -35,6 +36,7 @@ const ProductManagement = () =>{
         }
         else {
             onTokenExpire(navigate);
+            
         return;
         }
     }
@@ -45,9 +47,54 @@ const ProductManagement = () =>{
         getProducts(page-1);
 
     }
+    async function deleteProduct(id:number) {
+        const token = checkToken();
+        if(!token) {
+            onTokenExpire(navigate);
+            return;
+        }
+        const response = await fetch(deleteProductURL(id),{
+            method:"DELETE",
+            headers:{
+                "Content-type":"application/json",
+                "Authorization":"Bearer "+token
+            }
+        });
+        if(response.ok) {
+            toast.success("Deleted product");
+            setTimeout(() => {
+  navigate(0);  // hoặc window.location.reload()
+}, 1500);
+            
+            return;
+        } 
+        else {
+            if(response.status==401) {
+                onTokenExpire(navigate);
+                return;
+            }
+            const data= await response.json();
+            toast.error(data.message);
+            return;
+        }
+    }
+    async function handleDelete(id:number) {
+        const result = await Swal.fire({
+    title: "Are you sure?",
+    text: "This action cannot be undone.",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonColor: "#d33",
+    cancelButtonColor: "#3085d6",
+    confirmButtonText: "Yes, delete it!",
+  });
+  if(result.isConfirmed) {
+    deleteProduct(id);
+  }
+    }
     return (
-    <div className="max-w-screen-2xl mx-auto pt-20 px-5">
-        <div className="flex items-center justify-between mb-8">
+<div className="max-w-screen-2xl mx-auto pt-20 px-5">
+  <div className="flex items-center justify-between mb-8">
     <h1 className="text-3xl font-bold">Product Management</h1>
     <Link
       to="/add_product"
@@ -56,63 +103,66 @@ const ProductManagement = () =>{
       + Add Product
     </Link>
   </div>
-        <div className="overflow-x-auto">
-            <table className="min-w-full bg-white border border-gray-200">
-            <thead>
-                <tr>
-                <th className="py-3 px-4 border-b">Product Code</th>
-                <th className="py-3 px-4 border-b">Name</th>
-                <th className="py-3 px-4 border-b">Short Description</th>
-                <th className="py-3 px-4 border-b">Max Price</th>
-                <th className="py-3 px-4 border-b">Min Price</th>
-                <th className="py-3 px-4 border-b">Sold</th> 
-                <th className="py-3 px-4 border-b">Quantity</th>
-                <th className="py-3 px-4 border-b">Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                {listProducts?.map((item)=>(
-                    <tr key={item.id}>
-                        <td className="py-3 px-4 border-b text-center">{item.code}</td>
-                        <td className="py-3 px-4 border-b text-center">{item.name}</td>
-                        <td className="py-3 px-4 border-b text-center">{item.shortDesc}</td> 
-                        <td className="py-3 px-4 border-b text-center">{formatPrice(item.maxPrice)}</td> 
-                        <td className="py-3 px-4 border-b text-center">{formatPrice(item.minPrice)}</td> 
-                        <td className="py-3 px-4 border-b text-center">{item.sold}</td>
-                        <td className="py-3 px-4 border-b text-center">
-                            {item.quantity}
-                        </td>
-                        <td className="py-3 px-4 border-b text-center"><Link to={`/product_detail/${item.id}`} className="text-blue-500 hover:underline">View Details</Link></td>
+  <div className="overflow-x-auto">
+    <table className="min-w-full bg-white border border-gray-200">
+      <thead>
+        <tr>
+          <th className="py-3 px-4 border-b">Product Code</th>
+          <th className="py-3 px-4 border-b">Name</th>
+          <th className="py-3 px-4 border-b">Short Description</th>
+          <th className="py-3 px-4 border-b">Max Price</th>
+          <th className="py-3 px-4 border-b">Min Price</th>
+          <th className="py-3 px-4 border-b">Sold</th>
+          <th className="py-3 px-4 border-b">Quantity</th>
+          <th className="py-3 px-4 border-b">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {listProducts?.map((item) => (
+          <tr key={item.id}>
+            <td className="py-3 px-4 border-b text-center">{item.code}</td>
+            <td className="py-3 px-4 border-b text-center">{item.name}</td>
+            <td className="py-3 px-4 border-b text-center">{item.shortDesc}</td>
+            <td className="py-3 px-4 border-b text-center">
+              {formatPrice(item.maxPrice)}
+            </td>
+            <td className="py-3 px-4 border-b text-center">
+              {formatPrice(item.minPrice)}
+            </td>
+            <td className="py-3 px-4 border-b text-center">{item.sold}</td>
+            <td className="py-3 px-4 border-b text-center">{item.quantity}</td>
+            <td className="py-3 px-4 border-b text-center space-x-2">
+              <Link
+                to={`/product_detail/${item.id}`}
+                className="text-blue-500 hover:underline"
+              >
+                View
+              </Link>
+              <Link
+                to={`/update_product/${item.id}`}
+                className="text-green-600 hover:underline"
+              >
+                Update
+              </Link>
+              <button
+                onClick={() => handleDelete(item.id)}
+                className="text-red-500 hover:underline"
+              >
+                Delete
+              </button>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+  <Pagination
+    totalPages={totalPage}
+    currentPage={currentPage + 1}
+    onPageChange={onPageChange}
+  />
+</div>
 
-                    </tr>
-                )
-                    
-                )}
-                {/*orders.map((order) =>  (
-                <tr key={order.id}>
-                    <td className="py-3 px-4 border-b text-center">{order.code}</td>
-                    <td className="py-3 px-4 border-b text-center">{ formatDate(order.createAt) }</td>
-                    <td className="py-3 px-4 border-b text-center">
-                    {order.total}đ
-                    </td>
-                    <td className="py-3 px-4 border-b text-center">
-                    { order.status }
-                    </td>
-                    <td className="py-3 px-4 border-b text-center">
-                    <Link
-                        to={`/order_management/${order.id}`}
-                        className="text-blue-500 hover:underline"
-                    >
-                        View Details
-                    </Link>
-                    </td>
-                </tr>
-                ))*/}
-            </tbody>
-            </table>
-        </div>
-        <Pagination totalPages={totalPage} currentPage={currentPage+1} onPageChange={onPageChange}></Pagination>
-        </div>
     );
 }
 export default ProductManagement;

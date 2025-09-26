@@ -29,3 +29,7 @@ export const createProdutURL = `${baseURL}/admin/create_product`;
 export const getSizeAndColor = `${baseURL}/unsecure/sizes_colors`;
 export const createVariantURL =(id:number) => `${baseURL}/admin/add_variant/${id}`;
 export const updateProductURL = (id:number)=>`${baseURL}/admin/update_product/${id}`;
+export const getVariantURL = (id:number)=>`${baseURL}/unsecure/find_variant/${id}`;
+export const updateVariantURL = (id:number)=>`${baseURL}/admin/update_product_variant/${id}`;
+export const deleteProductURL = (id:number)=>`${baseURL}/admin/delete_product/${id}`;
+export const deleteProductVariantURL = (id:number)=>`${baseURL}/admin/delete_product_variant/${id}`;
