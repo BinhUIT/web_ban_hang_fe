@@ -12,6 +12,7 @@ import {
 import toast from "react-hot-toast";
 import { useEffect, useState } from "react";
 import { baseURL } from "../axios/baseURL";
+import { getCartMetaDataURL, updateCartMetaDataURL } from "../axios/api_urls";
 
 const Cart = () => {
   const { productsInCart, subtotal } = useAppSelector((state) => state.cart);
@@ -19,27 +20,45 @@ const Cart = () => {
   const [cartItems, setCartItems] = useState<any[]>([]);
   const [cartItemAmount, setCartItemAmount] = useState<Map<number,number>>(new Map());
   const [total, setTotal] = useState<number>(0);
+  const [metaData, setMetaData] = useState<any[]>([]);
   const navigate = useNavigate();
-  function fetchCart(token:string) {
-    fetch(baseURL+"/user/cart",{
-          method:"GET",
+  async function getCartMetaData() {
+    const userJSONString = localStorage.getItem("user");
+    if(!userJSONString) {
+      return null;
+    }
+    const user = await JSON.parse(userJSONString);
+    const url = getCartMetaDataURL(user.id);
+    
+    const response = await fetch(getCartMetaDataURL(user.id));
+    
+    const data= await response.json();
+    setMetaData(data);
+    console.log(data);
+    return data;
+  }
+  async function fetchCart(token:string) {
+    const metaData = await getCartMetaData();
+    fetch(baseURL+"/user/get_cart",{
+          method:"POST",
           headers:{
             "Content-type":"application/json",
             "Authorization":`Bearer ${token}`
-          }
+          },
+          body:JSON.stringify(metaData)
         }).then((response)=>{
-          console.log(response);
+          
           if(response.body) {
           response.json().then((data)=>{
-            console.log(data);
-            setCartItems(data.cartItems);
+            
+            setCartItems(data.data.cartItems);
             let newTotal=0;
-            for(let item of data.cartItems) {
+            for(let item of data.data.cartItems) {
               newTotal= newTotal+item.productVariant.price*item.amount;
             }
             setTotal(newTotal);
             const tempMap= new Map();
-            for(let item of data.cartItems) {
+            for(let item of data.data.cartItems) {
               tempMap.set(item.id,item.amount);
             }
             setCartItemAmount(tempMap); 
@@ -70,7 +89,13 @@ const Cart = () => {
     }
   }
   async function onClearAll() {
-    const token = localStorage.getItem("token");
+    setCartItems([]);
+    const currentData = {...metaData};
+    currentData.listDetails=[];
+    setMetaData(currentData);
+    saveOneItemToCache(currentData);
+
+    /*const token = localStorage.getItem("token");
     if(token) {
       const response = await fetch(baseURL+"/user/clear_cart",{
         method:"DELETE",
@@ -80,7 +105,7 @@ const Cart = () => {
         }
       });
       if(response.ok) {
-                                fetchCart(token);
+                                await fetchCart(token);
                                 toast.success("Cleared items");
                               } 
                               else if(response.status==401) { 
@@ -91,7 +116,7 @@ const Cart = () => {
                               else {
                                 toast.error("Error, please try again");
                               }
-    }
+    }*/
   }
   useEffect(()=>{
     
@@ -101,7 +126,7 @@ const Cart = () => {
     }
   },[])
   async function onSaveItems() {
-     const token = checkToken();
+     /*const token = checkToken();
      if(token) {
       const requestBody = Array.from(cartItemAmount).map(([key, value])=>{
         return {
@@ -130,10 +155,26 @@ const Cart = () => {
                                 toast.error("Error, please try again");
                               }
 
-  }
+  }*/
 }
 async function onClearOne(id:number) {
-  const token = localStorage.getItem("token");
+  const currentData = {...metaData};
+  const newListDetail = currentData.listDetails.filter((item:any)=>{
+    return item.productVariantId!=id
+  });
+  console.log(id);
+  
+  const tempCartItem= cartItems.filter((item)=>{
+    return item.productVariant.id!=id;
+  }) 
+  setCartItems(tempCartItem);
+  console.log(newListDetail);
+  currentData.listDetails = newListDetail;
+  setMetaData(currentData);
+  saveOneItemToCache(currentData);
+  
+
+  /*const token = localStorage.getItem("token");
     if(token) {
       const response = await fetch(baseURL+"/user/delete_cart_item/"+id,{
         method:"DELETE",
@@ -154,7 +195,21 @@ async function onClearOne(id:number) {
                               else {
                                 toast.error("Error, please try again");
                               }
-    }
+    }*/
+}
+async function saveOneItemToCache(metaData:any) {
+  const response  = await fetch(updateCartMetaDataURL,{
+    method:"POST",
+    headers:{
+      "Content-type":"application/json"
+    },
+    body:JSON.stringify(metaData)
+  });
+  if(response.ok) {
+    const responseData= await response.json();
+    console.log(cartItems);
+    
+  }
 }
   return (
     <div className="bg-white mx-auto max-w-screen-2xl px-5 max-[400px]:px-3">
@@ -172,7 +227,7 @@ async function onClearOne(id:number) {
               role="list"
               className="divide-y divide-gray-200 border-b border-t border-gray-200"
             >
-              {cartItems.map((item) => {
+              {cartItems.map((item,index) => {
                 const productVariant = item.productVariant;
                 return (
                 <li key={productVariant.id} className="flex py-6 sm:py-10">
@@ -217,13 +272,17 @@ async function onClearOne(id:number) {
                           id="quantity"
                           min="1"
                           className="w-16 h-7 indent-1 bg-white border"
-                          value={cartItemAmount.get(item.id)}
+                          value={metaData.listDetails[index].amount}
                           onChange={
                             async (e)=>{
                               e.preventDefault();
                               if(Number.parseInt(e.target.value)<=0) {
                                 return;
                               }
+                              const currentData= {...metaData};
+                              currentData.listDetails[index].amount= e.target.value;
+                              setMetaData(currentData);
+                              saveOneItemToCache(currentData);
                               /*const token = checkToken();
                               const requestBody = {
                                 cartItemId:item.id,
@@ -249,9 +308,7 @@ async function onClearOne(id:number) {
                               else {
                                 toast.error("Error, please try again");
                               }*/
-                              const tempMap = new Map(cartItemAmount);
-                              tempMap.set(item.id,Number.parseInt(e.target.value));
-                              setCartItemAmount(tempMap);
+                             
                             }
                           }
                         />
@@ -262,7 +319,7 @@ async function onClearOne(id:number) {
                             className="-m-2 inline-flex p-2 text-gray-400 hover:text-gray-500"
                             onClick={(e)=>{
                               e.preventDefault();
-                              onClearOne(item.id);
+                              onClearOne(item.productVariant.id);
                             }}
                           >
                             <span className="sr-only">Remove</span>
@@ -283,27 +340,9 @@ async function onClearOne(id:number) {
 })}
             </ul>
             {cartItems&&cartItems.length>0&&<div>
-            <button
-  onClick={(e) => {
-    e.preventDefault();
-    onSaveItems();
-  }}
-  className="mt-4 px-4 py-2 rounded-xl bg-green-600 text-white hover:bg-green-700 transition"
->
-  Save
-</button>
-<br />
+            
 
-<button
-  onClick={(e) => {
-    e.preventDefault();
-    onDontSave();
-  }}
-  className="mt-2 px-4 py-2 rounded-xl bg-gray-500 text-white hover:bg-gray-600 transition"
->
-  Don't save
-</button>
-<br />
+
 
 <button
   onClick={(e) => {

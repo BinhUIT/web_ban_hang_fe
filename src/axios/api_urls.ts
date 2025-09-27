@@ -33,3 +33,5 @@ export const getVariantURL = (id:number)=>`${baseURL}/unsecure/find_variant/${id
 export const updateVariantURL = (id:number)=>`${baseURL}/admin/update_product_variant/${id}`;
 export const deleteProductURL = (id:number)=>`${baseURL}/admin/delete_product/${id}`;
 export const deleteProductVariantURL = (id:number)=>`${baseURL}/admin/delete_product_variant/${id}`;
+export const getCartMetaDataURL = (id:number)=>`http://localhost:8082/${id}`;
+export const updateCartMetaDataURL = "http://localhost:8082/update";
