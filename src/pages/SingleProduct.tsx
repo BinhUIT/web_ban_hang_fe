@@ -14,6 +14,7 @@ import WithNumberInputWrapper from "../utils/withNumberInputWrapper";
 import toast from "react-hot-toast";
 import { baseURL } from "../axios/baseURL";
 import { formatCategoryName } from "../utils/formatCategoryName";
+import { getCartMetaDataURL, updateCartMetaDataURL } from "../axios/api_urls";
 
 const SingleProduct = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -32,6 +33,7 @@ const SingleProduct = () => {
     size: "",
     id:0
   });
+  const [cartMetaData, setCartMetaData] = useState<any>();
   
   const SelectInputUpgrade = WithSelectInputWrapper(StandardSelectInput);
   const QuantityInputUpgrade = WithNumberInputWrapper(QuantityInput);
@@ -59,7 +61,16 @@ const SingleProduct = () => {
     }
     return colorMap;
   }
-
+  async function getCartMetaData() {
+    const userJSON = localStorage.getItem("user");
+    if(!userJSON) {
+      return;
+    } 
+    const user = await JSON.parse(userJSON);
+    const response = await fetch(getCartMetaDataURL(user.id));
+    const data= await response.json();
+    setCartMetaData(data);
+  }
   useEffect(() => {
     const fetchSingleProduct = async () => {
       const response = await fetch(`${baseURL}/unsecure/product/${params.id}`);
@@ -68,6 +79,7 @@ const SingleProduct = () => {
         navigate("/");
         return;
       }
+      
       const data = await response.json();
       setSingleProduct(data);
       setCurrentPrice(`${data?.minPrice}đ - ${data?.maxPrice}đ`);
@@ -84,6 +96,7 @@ const SingleProduct = () => {
 
     fetchSingleProduct();
     fetchProducts();
+    getCartMetaData();
   }, [params.id]);
 
   const handleAddToCart = async () => {
@@ -103,18 +116,31 @@ const SingleProduct = () => {
         color: "#713f12",
       },
     });
+    return;
     }
     const jsonBody = {
       productVariantId:currentVariant.id,
-      amount:quantity
+      amount:quantity,
+      select:true
     }
-    const response = await fetch(baseURL+"/user/add_to_cart",{
+    const tempMetaData= {...cartMetaData};
+    let isAdd=true;
+    for(let i=0;i<tempMetaData.listDetails.length;i++) {
+      if(jsonBody.productVariantId==tempMetaData.listDetails[i].productVariantId) {
+        tempMetaData.listDetails[i].amount=jsonBody.amount;
+        isAdd=false;
+      }
+    }
+    if(isAdd) {
+      tempMetaData.listDetails.push(jsonBody);
+    }
+    const response = await fetch(updateCartMetaDataURL,{
       method:"POST",
       headers: {
         "Content-type":"application/json",
-        "Authorization":"Bearer "+token
+        
       },
-      body:JSON.stringify(jsonBody)
+      body:JSON.stringify(tempMetaData)
     });
     if(response.ok) {
       toast.success("Add item to cart success");

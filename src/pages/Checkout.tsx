@@ -8,6 +8,7 @@ import toast from "react-hot-toast";
 import { checkCheckoutFormData } from "../utils/checkCheckoutFormData";
 import { useEffect, useRef, useState } from "react";
 import { baseURL } from "../axios/baseURL";
+import { updateCartMetaDataURL } from "../axios/api_urls";
 
 /*
 address: "Marka Markovic 22"
@@ -49,6 +50,8 @@ const Checkout = () => {
   const [discount, setDiscount] = useState<any>(null);
   const [discountChecked, setDiscountChecked] = useState<any>(null);
   const [couponCodeInput, setCouponCodeInput] = useState("");
+  const [remainCartData, setRemainCartData] = useState<any>();
+  const [orderCartData, setOrderCartData]= useState<any>();
   const navigate = useNavigate();
   function checkToken() {
     const token = localStorage.getItem("token");
@@ -60,6 +63,19 @@ const Checkout = () => {
     } 
     return token;
   }
+  async function updateCart() {
+   const remain = {...remainCartData};
+   for(let i=0;i<remain.listDetails.length;i++) {
+      remain.listDetails[i].select=true;
+   }
+   await fetch(updateCartMetaDataURL,{
+      method:"POST",
+      headers:{
+         "Content-type":"application/json"
+      },
+      body:JSON.stringify(remain)
+   })
+  }
   function calculateDiscount(discount:any, price:number) {
    if(discount.discountType=="FIXED")  
       return discount.discount;
@@ -68,11 +84,15 @@ const Checkout = () => {
   async function onCheckOut() {
     const token = checkToken();
     if(token) {
-      const requestBody = {
-      couponCode: discount.code,
+      const subInfo = {
+      couponCode: discount?discount.code:"",
         paymentType:checkOutType,
         address:isChangeAddressRef.current?user.address:null,
         phone:isChangePhoneRef.current?user.phone:null
+      }
+      const requestBody = {
+         cartData:orderCartData,
+         subInfo:subInfo
       }
       const response = await fetch(baseURL+"/user/order",{
         method:"POST",
@@ -84,12 +104,13 @@ const Checkout = () => {
       });
       if(response.ok) {
         toast.success("Create order success");
+        await updateCart();
         const data = await response.json()
-        if(data.message=="Success") {
-         navigate("/order-history/"+data.orderId);
+        if(data.data.message=="Success") {
+         navigate("/order-history/"+data.data.orderId);
         }
         else {
-         window.location.replace(data.message);
+         window.location.replace(data.data.message);
         }
       }
       if(response.status==401) {
@@ -108,17 +129,31 @@ const Checkout = () => {
       navigate("/login");
     }
   }
-  function fetchCart(token:string) {
-    fetch(baseURL+"/user/cart",{
-          method:"GET",
+  async function fetchCart(token:string) {
+   const cartJSONString = localStorage.getItem("cart-meta-data");
+   if(!cartJSONString) {
+      navigate("/");
+      toast.error("Some error occured, please add item to cart again");
+      return;
+   }
+   const cartData = await JSON.parse(cartJSONString);
+   const remainCartData= {...cartData};
+   cartData.listDetails = cartData.listDetails.filter((item)=>item.select);
+   remainCartData.listDetails = remainCartData.listDetails.filter((item)=>!item.select);
+   setOrderCartData(cartData);
+   setRemainCartData(remainCartData);
+    fetch(baseURL+"/user/get_cart",{
+          method:"POST",
           headers:{
             "Content-type":"application/json",
             "Authorization":`Bearer ${token}`
-          }
+          },
+          body:JSON.stringify(cartData)
+
         }).then((response)=>{
           response.json().then((data)=>{
             console.log(data);
-            setCartItems(data.cartItems);
+            setCartItems(data.data.cartItems);
             
            
           }).catch(err=>{

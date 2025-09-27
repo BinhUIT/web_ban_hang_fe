@@ -4,7 +4,7 @@ import {
   HiQuestionMarkCircle as QuestionMarkCircleIcon,
 } from "react-icons/hi2";
 import { useAppDispatch, useAppSelector } from "../hooks";
-import { Link, useNavigate } from "react-router-dom";
+import { json, Link, useNavigate } from "react-router-dom";
 import {
   removeProductFromTheCart,
   updateProductQuantity,
@@ -13,6 +13,7 @@ import toast from "react-hot-toast";
 import { useEffect, useState } from "react";
 import { baseURL } from "../axios/baseURL";
 import { getCartMetaDataURL, updateCartMetaDataURL } from "../axios/api_urls";
+import { formatPrice } from "../utils/formatPriceString";
 
 const Cart = () => {
   const { productsInCart, subtotal } = useAppSelector((state) => state.cart);
@@ -22,6 +23,7 @@ const Cart = () => {
   const [total, setTotal] = useState<number>(0);
   const [metaData, setMetaData] = useState<any[]>([]);
   const navigate = useNavigate();
+  
   async function getCartMetaData() {
     const userJSONString = localStorage.getItem("user");
     if(!userJSONString) {
@@ -82,12 +84,7 @@ const Cart = () => {
     } 
     return token;
   }
-  function onDontSave() {
-    const token = localStorage.getItem("token");
-    if(token) {
-      fetchCart(token);
-    }
-  }
+  
   async function onClearAll() {
     setCartItems([]);
     const currentData = {...metaData};
@@ -217,7 +214,11 @@ async function saveOneItemToCache(metaData:any) {
         <h1 className="text-3xl tracking-tight text-gray-900 sm:text-4xl">
           Shopping Cart
         </h1>
-        <form className="mt-12 lg:grid lg:grid-cols-12 lg:items-start lg:gap-x-12 xl:gap-x-16">
+        <form className="mt-12 lg:grid lg:grid-cols-12 lg:items-start lg:gap-x-12 xl:gap-x-16" onSubmit={(e)=>
+          {
+            e.preventDefault();
+          }
+        }>
           <section aria-labelledby="cart-heading" className="lg:col-span-7">
             <h2 id="cart-heading" className="sr-only">
               Items in your shopping cart
@@ -231,6 +232,29 @@ async function saveOneItemToCache(metaData:any) {
                 const productVariant = item.productVariant;
                 return (
                 <li key={productVariant.id} className="flex py-6 sm:py-10">
+                  <div className="flex items-center mr-3">
+    <input
+      type="checkbox"
+      className="h-4 w-4 text-secondaryBrown border-gray-300 rounded"
+      checked = {metaData.listDetails[index].select}
+      onChange={(e)=>{
+        if(e.target.checked==true) {
+          const tempMetaData= {...metaData};
+          tempMetaData.listDetails[index].select=true;
+          let newTotal = total;
+          newTotal = newTotal+item.productVariant.price*item.amount;
+          setTotal(newTotal);
+        }
+        else {
+          const tempMetaData= {...metaData};
+          tempMetaData.listDetails[index].select=false;
+          let newTotal = total;
+          newTotal = newTotal-item.productVariant.price*item.amount;
+          setTotal(newTotal);
+        }
+      }}
+    />
+  </div>
                   <div className="flex-shrink-0">
                     <img
                       src={`${baseURL}/${productVariant.image}`}
@@ -279,35 +303,14 @@ async function saveOneItemToCache(metaData:any) {
                               if(Number.parseInt(e.target.value)<=0) {
                                 return;
                               }
+                              let newTotal= total -(metaData.listDetails[index].amount-e.target.value)*item.productVariant.price;
+                              setTotal(newTotal);
                               const currentData= {...metaData};
                               currentData.listDetails[index].amount= e.target.value;
                               setMetaData(currentData);
+                              console.log(currentData);
                               saveOneItemToCache(currentData);
-                              /*const token = checkToken();
-                              const requestBody = {
-                                cartItemId:item.id,
-                                newAmount:e.target.value
-                              }
-                              const response = await fetch(baseURL+"/user/update_cart" ,{
-                                method:"PUT",
-                                headers:{
-                                  "Content-type":"application/json",
-                                  "Authorization":"Bearer "+token
-                                },
-                                body:JSON.stringify(requestBody)
-                              })
-                              if(response.ok) {
-                                fetchCart(token);
-
-                              } 
-                              else if(response.status==401) { 
-                                localStorage.removeItem("user");
-                                localStorage.removeItem("token");
-                                navigate("/login");
-                              }
-                              else {
-                                toast.error("Error, please try again");
-                              }*/
+                              
                              
                             }
                           }
@@ -373,7 +376,7 @@ async function saveOneItemToCache(metaData:any) {
               <div className="flex items-center justify-between">
                 <dt className="text-sm text-gray-600">Subtotal</dt>
                 <dd className="text-sm font-medium text-gray-900">
-                  {total}đ
+                  {formatPrice(total)}
                 </dd>
               </div>
               <div className="flex items-center justify-between border-t border-gray-200 pt-4">
@@ -392,29 +395,34 @@ async function saveOneItemToCache(metaData:any) {
                     />
                   </a>
                 </dt>
+                <dd className="text-sm font-medium text-gray-900">
+                  {formatPrice(5).substring(1,3)}
+                </dd>
                 
               </div>
-              <div className="flex items-center justify-between border-t border-gray-200 pt-4">
-               
-                <dd className="text-sm font-medium text-gray-900">
-                  {total / 5}đ
-                </dd>
-              </div>
+              
               <div className="flex items-center justify-between border-t border-gray-200 pt-4">
                 <dt className="text-base font-medium text-gray-900">
                   Order total
                 </dt>
                 <dd className="text-base font-medium text-gray-900">
-                  {total === 0 ? 0 : total  + 5}đ
+                  {formatPrice(total === 0 ? 0 : total  + 5)}
                 </dd>
               </div>
             </dl>
 
-            {cartItems.length > 0 && (
+            {total>0 && (
               <div className="mt-6">
                 <Link
                   to="/checkout"
                   className="text-white bg-secondaryBrown text-center text-xl font-normal tracking-[0.6px] leading-[72px] w-full h-12 flex items-center justify-center max-md:text-base"
+                  onClick={(e)=>{
+                    const tempMetaData  = {...metaData};
+                    
+                    const jsonString  = JSON.stringify(tempMetaData);
+                    console.log(jsonString);
+                    localStorage.setItem("cart-meta-data",jsonString);
+                  }}
                 >
                   Checkout
                 </Link>
