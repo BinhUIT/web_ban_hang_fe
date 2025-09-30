@@ -35,3 +35,9 @@ export const deleteProductURL = (id:number)=>`${baseURL}/admin/delete_product/${
 export const deleteProductVariantURL = (id:number)=>`${baseURL}/admin/delete_product_variant/${id}`;
 export const getCartMetaDataURL = (id:number)=>`http://localhost:8082/${id}`;
 export const updateCartMetaDataURL = "http://localhost:8082/update";
+export const logoutURL=(token:string)=>{
+    if(!token||token=="") {
+        return `${baseURL}/auth/logout`;
+    }
+    return `${baseURL}/auth/logout?token=${token}`;
+}

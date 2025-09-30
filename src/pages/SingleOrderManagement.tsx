@@ -99,57 +99,81 @@ const SingleOrderManagement = ()=>{
   },[])
     return (
         <div className="max-w-screen-2xl mx-auto pt-20 px-5">
-          <h1 className="text-3xl font-bold mb-8">Order Details</h1>
-          <div className="bg-white border border-gray-200 p-5 overflow-x-auto">
-            <h2 className="text-2xl font-semibold mb-4">
-              Order Code: {order?.code}
-            </h2>
-            <p className="mb-2">Date: {formatDate(order?.createAt)}</p>
-            <p className="mb-2">Origin Price: {formatPrice(order?.originPrice)} </p>
-            <p className="mb-2">Discount: {formatPrice(order?.discount)}</p>
-            <p className="mb-2">Subtotal: {(order?.total-order?.shipping_fee) }đ</p>
-            <p className="mb-2">Payment type: {order?.payment?.paymentType}</p>
-            <p className="mb-2">Shipping: {order?.shipping_fee} đ</p>
-            <p className="mb-2">Payment code: {order?.payment?.code}</p> 
-            <p className="mb-2">Address: {order?.address}</p> 
-            <p className="mb-2">Phone: {order?.phone}</p>
-           
-            <p className="mb-2">
-              Total: {order?.total}đ
-            </p>
-            
-            <p className="mb-2">Status: {order?.status}</p>
-            {order&&order.status=="PENDING"&&<button onClick={onCancelOrder} className="px-4 py-2 rounded-lg bg-[#7d7668] text-white font-semibold hover:opacity-90 transition">Cancel</button>}
-            {order&&order.status=="PENDING"&&<button onClick={onBillOfLanding} className="px-4 py-2 rounded-lg bg-[#7d7668] text-white font-semibold hover:opacity-90 transition">Ship to user</button> }
-            <br></br>
-            <br></br>
-            
-            <h3 className="text-xl font-semibold mt-6 mb-4">Items</h3>
-            <table className="singleOrder-table min-w-full bg-white border border-gray-200">
-              <thead>
-                <tr>
-                  <th className="py-3 px-4 border-b">Product Name</th>
-                  <th className="py-3 px-4 border-b">Quantity</th>
-                  <th className="py-3 px-4 border-b">Price</th>
-                </tr>
-              </thead>
-              <tbody>
-                {order?.orderItems.map((item:any) => (
-                  <tr key={nanoid()}>
-                    <td className="py-3 px-4 border-b">{item?.productVariant.name}</td>
-                    <td className="py-3 px-4 border-b text-center">
-                      {item?.amount}
-                    </td>
-                    <td className="py-3 px-4 border-b text-right">
-                      {item?.totalPrice}đ
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      );
+  <h1 className="text-3xl font-bold mb-8 text-gray-800">Order Details</h1>
+
+  <div className="bg-white border border-gray-200 rounded-2xl shadow-md p-6">
+    {/* Order Info */}
+    <h2 className="text-2xl font-semibold mb-6 text-gray-700">
+      Order Code: <span className="text-indigo-600">{order?.code}</span>
+    </h2>
+
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3 text-gray-700">
+      <p>Date: <span className="font-medium">{formatDate(order?.createAt)}</span></p>
+      <p>Origin Price: <span className="font-medium">{formatPrice(order?.originPrice)}</span></p>
+      <p>Discount: <span className="font-medium text-red-500">{formatPrice(order?.discount)}</span></p>
+      <p>Subtotal: <span className="font-medium">{formatPrice(order?.total - order?.shipping_fee)}</span></p>
+      <p>Payment type: <span className="font-medium">{order?.payment?.paymentType}</span></p>
+      <p>Shipping: <span className="font-medium">{formatPrice(order?.shipping_fee)}</span></p>
+      <p>Payment code: <span className="font-medium">{order?.payment?.code}</span></p>
+      <p>Address: <span className="font-medium">{order?.address}</span></p>
+      <p>Phone: <span className="font-medium">{order?.phone}</span></p>
+      <p>Total: <span className="font-bold text-indigo-600">{formatPrice(order?.total)}</span></p>
+      <p>Status: 
+        <span className={`ml-2 px-2 py-1 rounded-lg text-sm font-semibold 
+          ${order?.status === "PENDING" ? "bg-yellow-100 text-yellow-700" : 
+            order?.status === "COMPLETED" ? "bg-green-100 text-green-700" : 
+            "bg-gray-100 text-gray-700"}`}>
+          {order?.status}
+        </span>
+      </p>
+    </div>
+
+    {/* Buttons */}
+    {order && order.status === "PENDING" && (
+      <div className="mt-6 flex gap-4">
+        <button
+          onClick={onCancelOrder}
+          className="px-5 py-2 rounded-xl bg-red-500 text-white font-semibold shadow hover:bg-red-600 transition"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={onBillOfLanding}
+          className="px-5 py-2 rounded-xl bg-indigo-500 text-white font-semibold shadow hover:bg-indigo-600 transition"
+        >
+          Ship to user
+        </button>
+      </div>
+    )}
+
+    {/* Items */}
+    <h3 className="text-xl font-semibold mt-10 mb-4 text-gray-800">Items</h3>
+    <div className="overflow-x-auto">
+      <table className="w-full border border-gray-200 rounded-lg overflow-hidden">
+        <thead className="bg-gray-100 text-gray-700">
+          <tr>
+            <th className="py-3 px-4 text-left">Product Name</th>
+            <th className="py-3 px-4 text-center">Quantity</th>
+            <th className="py-3 px-4 text-right">Price</th>
+          </tr>
+        </thead>
+        <tbody>
+          {order?.orderItems.map((item: any, idx: number) => (
+            <tr
+              key={nanoid()}
+              className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}
+            >
+              <td className="py-3 px-4">{item?.productVariant.name}</td>
+              <td className="py-3 px-4 text-center">{item?.amount}</td>
+              <td className="py-3 px-4 text-right">{item?.totalPrice} đ</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+);
     
 }
 export default SingleOrderManagement;

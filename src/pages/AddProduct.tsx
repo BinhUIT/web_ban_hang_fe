@@ -82,6 +82,8 @@ export default function AddProduct() {
     setIsLoading(false);
     if(response.ok) {
         toast.success("Create product sucess");
+        const data= await response.json();
+        navigate("product_detail/"+data.data.id);
     } }
     catch(err) {
       setIsLoading(false);

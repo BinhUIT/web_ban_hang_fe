@@ -15,66 +15,28 @@ import withReactContent from "sweetalert2-react-content";
 import Button from "../components/Button";
 import { clearLocalStorage } from "../utils/clearLocalStorage";
 import { userConfirmReceiveURL } from "../axios/api_urls";
+import CircleLoader from "../components/CircleLoader";
+import { onTokenExpire } from "../utils/onTokenExpire";
+import { checkToken } from "../utils/checkToken";
+import { formatPrice } from "../utils/formatPriceString";
 
 
 const SingleOrderHistory = () => {
   const [user] = useState(JSON.parse(localStorage.getItem("user") || "{}"));
   const navigate = useNavigate();
-  
+  const [isLoading, setIsLoading] = useState(false);
   const MySwal = withReactContent(Swal);
   const {id} = useParams();
   const [order, setOrder] = useState<any>(null);
-  function checkToken() {
-    const tokenExpireAt = localStorage.getItem("token_expire_at");
-    const token = localStorage.getItem("token");
-    if(!tokenExpireAt||!token) {
-      toast.error("Please login again");
-      localStorage.removeItem("user");
-      localStorage.removeItem("token");
-      navigate("/login");
-    }
-    const expireTime = new Date(tokenExpireAt?tokenExpireAt:""); 
-    const now = new Date();
-    if(expireTime<=now) {
-      toast.error("Please login again");
-      localStorage.removeItem("user");
-      localStorage.removeItem("token");
-      navigate("/login");
-    }
-    return token;
-  }
   
-  async function onClickCheckout(checkoutType:string) {
-    const token = checkToken()
-    const response = await fetch(baseURL+"/user/"+checkoutType+"/"+id,{
-      method:"POST",
-      headers:{
-        "Content-type":"application/json",
-        "Authorization":"Bearer "+(token?token:"")
-      }
-    });
-    if(response.status==404||response.status==400||response.status==500) {
-      toast.error("Error, please try again");
-    } 
-    if(response.status==401) {
-      toast.error("Please login again");
-      localStorage.removeItem("user");
-      localStorage.removeItem("token");
-      navigate("/login");
-    }
-    if(response.ok) {
-      const paymentLink = await response.text();
-      window.location.replace(paymentLink);
-    }
-  }
+  
   
   async function cancelOrder() {
-    const token = localStorage.getItem("token");
+    const token = checkToken();
     
     if(!token) {
-      localStorage.removeItem("user");
-      toast.error("Please login to view this page");
-      navigate("/login");
+      onTokenExpire(navigate);
+      return;
     }
     const response =await fetch(`${baseURL}/user/cancel-order/${id}`,{
       method:"PUT",
@@ -122,9 +84,8 @@ const SingleOrderHistory = () => {
   async function confirmReceivedOrder() {
     const token = checkToken();
     if(!token) {
-      toast.error("You have been log out, please login again");
-      clearLocalStorage();
-      navigate("/login");
+      onTokenExpire(navigate);
+      return;
     }
     const url = userConfirmReceiveURL(id?parseInt(id):-1);
     const response = await fetch(url,{
@@ -146,16 +107,16 @@ const SingleOrderHistory = () => {
           }
   }
   async function fetchOrderById() {
-    const token = localStorage.getItem("token");
+    const token = checkToken();
     if(!id) {
       return;
     }
     if(!token) {
-      localStorage.removeItem("user");
-      toast.error("Please login to view this page");
-      navigate("/login");
+      onTokenExpire(navigate);
+      return;
     }
     const url = `${baseURL}/user/order-by-id/${id}`;
+    setIsLoading(true);
     const response = await fetch(url,{
       method:"GET",
       headers:{
@@ -163,6 +124,7 @@ const SingleOrderHistory = () => {
         "Authorization":"Bearer "+token
       }
     });
+    setIsLoading(false);
     if(response.status==404){
       toast.error("Order not found");
     }
@@ -181,7 +143,7 @@ const SingleOrderHistory = () => {
     }
     if(response.ok) {
       const data = await response.json();
-      setOrder(data);
+      setOrder(data.data);
       console.log(data);
     }
 
@@ -197,60 +159,88 @@ const SingleOrderHistory = () => {
 
   return (
     <div className="max-w-screen-2xl mx-auto pt-20 px-5">
-      <h1 className="text-3xl font-bold mb-8">Order Details</h1>
-      <div className="bg-white border border-gray-200 p-5 overflow-x-auto">
-        <h2 className="text-2xl font-semibold mb-4">
-          Order Code: {order?.code}
-        </h2>
-        <p className="mb-2">Date: {formatDate(order?.createAt)}</p>
-        <p className="mb-2">Origin Price: {(order?.originPrice)} đ</p>
-        <p className="mb-2">Discount: {(order?.discount)} đ</p>
-        <p className="mb-2">Subtotal: {(order?.total-order?.shipping_fee) }đ</p>
-        <p className="mb-2">Shipping: {order?.shipping_fee} đ</p>
-       
-       
-        <p className="mb-2">
-          Total: {order?.total}đ
-        </p>
-        
-        <p className="mb-2">Status: {order?.status}</p>
-        {order&&order.status=="PENDING"&&<button onClick={onClickCancel} className="px-4 py-2 rounded-lg bg-[#7d7668] text-white font-semibold hover:opacity-90 transition">Cancel</button>}
-        {order&&order.status=="SHIPPING"&&<button onClick={confirmReceivedOrder} className="px-4 py-2 rounded-lg bg-[#7d7668] text-white font-semibold hover:opacity-90 transition">Received Order</button>}
-        <br></br>
-        <br></br>
-        {order&&!order.isCreatePayment&&<div>
-          <button className="px-4 py-2 rounded-lg bg-[#7d7668] text-white font-semibold hover:opacity-90 transition" onClick={(e)=>{
-            onClickCheckout("confirm_checkout_online");
-          }}>Online Check out</button>
-          <button className="px-4 py-2 rounded-lg bg-[#7d7668] text-white font-semibold hover:opacity-90 transition" onClick={(e)=>{
-            onClickCheckout("confirm_cod");
-          }}>Cost on Delivery</button>
-        </div>}
-        <h3 className="text-xl font-semibold mt-6 mb-4">Items</h3>
-        <table className="singleOrder-table min-w-full bg-white border border-gray-200">
-          <thead>
-            <tr>
-              <th className="py-3 px-4 border-b">Product Name</th>
-              <th className="py-3 px-4 border-b">Quantity</th>
-              <th className="py-3 px-4 border-b">Price</th>
-            </tr>
-          </thead>
-          <tbody>
-            {order?.orderItems.map((item:any) => (
-              <tr key={nanoid()}>
-                <td className="py-3 px-4 border-b">{item?.productVariant.name}</td>
-                <td className="py-3 px-4 border-b text-center">
-                  {item?.amount}
-                </td>
-                <td className="py-3 px-4 border-b text-right">
-                  {item?.totalPrice}đ
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+  {isLoading && <CircleLoader />}
+
+  <h1 className="text-3xl font-bold mb-8 text-gray-800">Order Details</h1>
+
+  <div className="bg-white border border-gray-200 rounded-2xl shadow-md p-6">
+    {/* Order Info */}
+    <h2 className="text-2xl font-semibold mb-6 text-gray-700">
+      Order Code: <span className="text-indigo-600">{order?.code}</span>
+    </h2>
+
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-3 text-gray-700">
+      <p>Date: <span className="font-medium">{formatDate(order?.createAt)}</span></p>
+      <p>Origin Price: <span className="font-medium">{formatPrice(order?.originPrice)}</span></p>
+      <p>Discount: <span className="font-medium text-red-500">{formatPrice(order?.discount)}</span></p>
+      <p>Subtotal: <span className="font-medium">{formatPrice(order?.total - order?.shipping_fee)}</span></p>
+      <p>Shipping: <span className="font-medium">{formatPrice(order?.shipping_fee)}</span></p>
+      <p>Total: <span className="font-bold text-indigo-600">{formatPrice(order?.total)}</span></p>
+      <p>
+        Status:{" "}
+        <span
+          className={`ml-2 px-3 py-1 rounded-lg text-sm font-semibold
+          ${order?.status === "PENDING"
+            ? "bg-yellow-100 text-yellow-700"
+            : order?.status === "SHIPPING"
+            ? "bg-blue-100 text-blue-700"
+            : order?.status === "COMPLETED"
+            ? "bg-green-100 text-green-700"
+            : "bg-gray-100 text-gray-700"}`}
+        >
+          {order?.status}
+        </span>
+      </p>
     </div>
+
+    {/* Action Buttons */}
+    <div className="mt-6 flex gap-4">
+      {order && order.status === "PENDING" && (
+        <button
+          onClick={onClickCancel}
+          className="px-5 py-2 rounded-xl bg-red-500 text-white font-semibold shadow hover:bg-red-600 transition"
+        >
+          Cancel
+        </button>
+      )}
+      {order && order.status === "SHIPPING" && (
+        <button
+          onClick={confirmReceivedOrder}
+          className="px-5 py-2 rounded-xl bg-green-500 text-white font-semibold shadow hover:bg-green-600 transition"
+        >
+          Received Order
+        </button>
+      )}
+    </div>
+
+    {/* Items */}
+    <h3 className="text-xl font-semibold mt-10 mb-4 text-gray-800">Items</h3>
+    <div className="overflow-x-auto">
+      <table className="w-full border border-gray-200 rounded-lg overflow-hidden">
+        <thead className="bg-gray-100 text-gray-700">
+          <tr>
+            <th className="py-3 px-4 text-left">Product Name</th>
+            <th className="py-3 px-4 text-center">Quantity</th>
+            <th className="py-3 px-4 text-right">Price</th>
+          </tr>
+        </thead>
+        <tbody>
+          {order?.orderItems.map((item: any, idx: number) => (
+            <tr
+              key={nanoid()}
+              className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}
+            >
+              <td className="py-3 px-4">{item?.productVariant.name}</td>
+              <td className="py-3 px-4 text-center">{item?.amount}</td>
+              <td className="py-3 px-4 text-right">{item?.totalPrice} đ</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
   );
 };
 

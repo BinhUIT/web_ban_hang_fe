@@ -23,7 +23,7 @@ const Login = () => {
     if (!checkLoginFormData(data)) return;
     
     // Check if user with the email and password exists
-    fetch(baseURL+"/unsecure/login",{
+    fetch(baseURL+"/auth/login",{
       method:"POST",
       headers:{
         "Content-type":"application/json"

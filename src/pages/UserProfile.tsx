@@ -7,15 +7,24 @@ import { checkUserProfileFormData } from "../utils/checkUserProfileFormData";
 import { setLoginStatus } from "../features/auth/authSlice";
 import { store } from "../store";
 import apiCall from "../axios/api";
+import { logoutURL } from "../axios/api_urls";
+import CircleLoader from "../components/CircleLoader";
 
 const UserProfile = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<User>();
-
-  const logout = () => {
+  const [isLoading, setIsLoading] = useState(false);
+  const logout = async () => {
+    const token = localStorage.getItem("token");
+    setIsLoading(true);
+    const response = await fetch(logoutURL(token?token:""),{
+      method:"DELETE"
+    });
+    setIsLoading(false);
     toast.error("Logged out successfully");
     localStorage.removeItem("user");
     localStorage.removeItem("token");
+    localStorage.removeItem("token_expire_at");
     store.dispatch(setLoginStatus(false));
     navigate("/login");
   };
@@ -32,7 +41,9 @@ const UserProfile = () => {
     const userId = JSON.parse(localStorage.getItem("user") || "{}").id;
     if (userId) {
       try {
+      
         await customFetch.put(`/users/${userId}`, data);
+        
       } catch (e) {
         toast.error("User update failed");
         return;
@@ -62,6 +73,7 @@ const UserProfile = () => {
   }, [navigate]);
   return (
     <div className="max-w-screen-lg mx-auto mt-24 px-5">
+      {isLoading&&<CircleLoader></CircleLoader>}
       <h1 className="text-3xl font-bold mb-8">User Profile</h1>
       <form className="flex flex-col gap-6" onSubmit={updateUser}>
         <div className="flex flex-col gap-1">
