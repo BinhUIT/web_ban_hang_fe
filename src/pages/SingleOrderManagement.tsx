@@ -6,6 +6,7 @@ import { checkToken } from "../utils/checkToken";
 import toast from "react-hot-toast";
 import { clearLocalStorage } from "../utils/clearLocalStorage";
 import { adminCancelOrderURL, adminGetOneOrderURL, adminShipOrderURL } from "../axios/api_urls";
+import { formatPrice } from "../utils/formatPriceString";
 const SingleOrderManagement = ()=>{
   const [order, setOrder] = useState<any>(null);
   const {id} = useParams();
@@ -104,12 +105,14 @@ const SingleOrderManagement = ()=>{
               Order Code: {order?.code}
             </h2>
             <p className="mb-2">Date: {formatDate(order?.createAt)}</p>
-            <p className="mb-2">Origin Price: {(order?.originPrice)} đ</p>
-            <p className="mb-2">Discount: {(order?.discount)} đ</p>
+            <p className="mb-2">Origin Price: {formatPrice(order?.originPrice)} </p>
+            <p className="mb-2">Discount: {formatPrice(order?.discount)}</p>
             <p className="mb-2">Subtotal: {(order?.total-order?.shipping_fee) }đ</p>
             <p className="mb-2">Payment type: {order?.payment?.paymentType}</p>
             <p className="mb-2">Shipping: {order?.shipping_fee} đ</p>
-           
+            <p className="mb-2">Payment code: {order?.payment?.code}</p> 
+            <p className="mb-2">Address: {order?.address}</p> 
+            <p className="mb-2">Phone: {order?.phone}</p>
            
             <p className="mb-2">
               Total: {order?.total}đ
@@ -117,7 +120,7 @@ const SingleOrderManagement = ()=>{
             
             <p className="mb-2">Status: {order?.status}</p>
             {order&&order.status=="PENDING"&&<button onClick={onCancelOrder} className="px-4 py-2 rounded-lg bg-[#7d7668] text-white font-semibold hover:opacity-90 transition">Cancel</button>}
-            {order&&order.status=="PENDING"&&<button onClick={onBillOfLanding} className="px-4 py-2 rounded-lg bg-[#7d7668] text-white font-semibold hover:opacity-90 transition">Bill of Landing</button> }
+            {order&&order.status=="PENDING"&&<button onClick={onBillOfLanding} className="px-4 py-2 rounded-lg bg-[#7d7668] text-white font-semibold hover:opacity-90 transition">Ship to user</button> }
             <br></br>
             <br></br>
             

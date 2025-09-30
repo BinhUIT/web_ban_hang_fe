@@ -14,6 +14,7 @@ import { useEffect, useState } from "react";
 import { baseURL } from "../axios/baseURL";
 import { getCartMetaDataURL, updateCartMetaDataURL } from "../axios/api_urls";
 import { formatPrice } from "../utils/formatPriceString";
+import CircleLoader from "../components/CircleLoader";
 
 const Cart = () => {
   const { productsInCart, subtotal } = useAppSelector((state) => state.cart);
@@ -23,7 +24,7 @@ const Cart = () => {
   const [total, setTotal] = useState<number>(0);
   const [metaData, setMetaData] = useState<any[]>([]);
   const navigate = useNavigate();
-  
+  const [isLoading, setIsLoading] = useState(false);
   async function getCartMetaData() {
     const userJSONString = localStorage.getItem("user");
     if(!userJSONString) {
@@ -40,7 +41,9 @@ const Cart = () => {
     return data;
   }
   async function fetchCart(token:string) {
+    setIsLoading(true);
     const metaData = await getCartMetaData();
+    
     fetch(baseURL+"/user/get_cart",{
           method:"POST",
           headers:{
@@ -49,7 +52,7 @@ const Cart = () => {
           },
           body:JSON.stringify(metaData)
         }).then((response)=>{
-          
+          setIsLoading(false);
           if(response.body) {
           response.json().then((data)=>{
             
@@ -66,11 +69,13 @@ const Cart = () => {
             setCartItemAmount(tempMap); 
           
           }).catch(err=>{
+            setIsLoading(false);
             console.error(err);
             
           }) 
         }
         }).catch(err=>{
+          setIsLoading(false);
           toast.error("Error, please reload page");
         }) 
   }
@@ -210,6 +215,7 @@ async function saveOneItemToCache(metaData:any) {
 }
   return (
     <div className="bg-white mx-auto max-w-screen-2xl px-5 max-[400px]:px-3">
+      {isLoading&&<CircleLoader></CircleLoader>}
       <div className="pb-24 pt-16">
         <h1 className="text-3xl tracking-tight text-gray-900 sm:text-4xl">
           Shopping Cart

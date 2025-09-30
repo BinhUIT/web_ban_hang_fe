@@ -9,6 +9,7 @@ import { checkCheckoutFormData } from "../utils/checkCheckoutFormData";
 import { useEffect, useRef, useState } from "react";
 import { baseURL } from "../axios/baseURL";
 import { updateCartMetaDataURL } from "../axios/api_urls";
+import CircleLoader from "../components/CircleLoader";
 
 /*
 address: "Marka Markovic 22"
@@ -52,6 +53,7 @@ const Checkout = () => {
   const [couponCodeInput, setCouponCodeInput] = useState("");
   const [remainCartData, setRemainCartData] = useState<any>();
   const [orderCartData, setOrderCartData]= useState<any>();
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   function checkToken() {
     const token = localStorage.getItem("token");
@@ -94,6 +96,7 @@ const Checkout = () => {
          cartData:orderCartData,
          subInfo:subInfo
       }
+      setIsLoading(true);
       const response = await fetch(baseURL+"/user/order",{
         method:"POST",
         headers:{
@@ -103,6 +106,7 @@ const Checkout = () => {
         body:JSON.stringify(requestBody)
       });
       if(response.ok) {
+         setIsLoading(false);
         toast.success("Create order success");
         await updateCart();
         const data = await response.json()
@@ -110,20 +114,24 @@ const Checkout = () => {
          navigate("/order-history/"+data.data.orderId);
         }
         else {
+         setIsLoading(false);
          window.location.replace(data.data.message);
         }
       }
       if(response.status==401) {
+         setIsLoading(false);
         toast.error("You have been logged out, please login again");
         localStorage.removeItem("user");
       localStorage.removeItem("token");
       navigate("/login");
       }
       if(response.status==500) {
+         setIsLoading(false);
         toast.error("Error, please try again");
       }
       }
     else {
+      setIsLoading(false);
       localStorage.removeItem("user");
       localStorage.removeItem("token");
       navigate("/login");
@@ -142,6 +150,7 @@ const Checkout = () => {
    remainCartData.listDetails = remainCartData.listDetails.filter((item)=>!item.select);
    setOrderCartData(cartData);
    setRemainCartData(remainCartData);
+   setIsLoading(true);
     fetch(baseURL+"/user/get_cart",{
           method:"POST",
           headers:{
@@ -151,18 +160,21 @@ const Checkout = () => {
           body:JSON.stringify(cartData)
 
         }).then((response)=>{
+         setIsLoading(false);
           response.json().then((data)=>{
             console.log(data);
             setCartItems(data.data.cartItems);
             
            
           }).catch(err=>{
+            setIsLoading(false);
             toast.error("You have been logged out, please login again");
             localStorage.removeItem("user");
             localStorage.removeItem("token");
             navigate("/login");
           })
         }).catch(err=>{
+         setIsLoading(false);
           toast.error("Error, please reload page");
         }) 
   }
@@ -208,6 +220,7 @@ const Checkout = () => {
   },[cartItems])
   return (
     <div className="mx-auto max-w-screen-2xl">
+      {isLoading&&<CircleLoader></CircleLoader>}
    <div className="pb-24 pt-16 px-5 max-[400px]:px-3">
       <h2 className="sr-only">Create Order</h2>
       <form
@@ -319,6 +332,8 @@ const Checkout = () => {
                <div>
                   <button onClick={async (e)=>{
                      e.preventDefault();
+                     console.log(couponCodeInput);
+
                      const response = await fetch(baseURL+"/unsecure/check_coupon?couponCode="+couponCodeInput+"&price="+subTotal);
                      if(response.ok) {
                         const data = await response.json();

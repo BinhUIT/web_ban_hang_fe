@@ -6,12 +6,14 @@ import toast from "react-hot-toast";
 import { checkToken } from "../utils/checkToken";
 import { onTokenExpire } from "../utils/onTokenExpire";
 import { clearLocalStorage } from "../utils/clearLocalStorage";
+import CircleLoader from "../components/CircleLoader";
 
 const CreateProductVariant: React.FC = () => {
   const { id } = useParams(); // Lấy productId từ URL
   const [colors, setColors] = useState<any[]>([]);
   const [sizes, setSizes] = useState<any[]>([]);
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
   const [form, setForm] = useState({
     name: "",
     color: "",
@@ -70,6 +72,7 @@ const CreateProductVariant: React.FC = () => {
     }
     formData.append("info", new Blob([JSON.stringify(info)], { type: "application/json" }));
     formData.append("image", form.image);
+    setIsLoading(true);
     const response = await fetch(createVariantURL(id?parseInt(id):0),{
         method:"POST",
         headers:{
@@ -79,15 +82,18 @@ const CreateProductVariant: React.FC = () => {
     });
     
     if(response.ok) {
+        setIsLoading(false);
         toast.success("Create variant sucess");
     } 
     else if(response.status==401) {
+        setIsLoading(false);
         toast.error("You have been logout, please login again");
         clearLocalStorage();
         navigate("/login");
         return;
     }
     else {
+        setIsLoading(false);
         const data = await response.json();
         toast.error(data.message);
     }
@@ -96,6 +102,7 @@ const CreateProductVariant: React.FC = () => {
 
   return (
     <div className="max-w-screen-md mx-auto p-6 bg-white rounded-2xl shadow-md mt-10">
+      {isLoading&&<CircleLoader></CircleLoader>}
       <h2 className="text-2xl font-bold mb-6">Add Product Variant</h2>
 
       <form onSubmit={handleSubmit} className="space-y-5">

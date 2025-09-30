@@ -24,9 +24,7 @@ const ShopPageContent = ({ categories, page} : { categories: object[]; page: num
   const [searchParams]= useSearchParams();
 
 useEffect(()=>{
-  if(sortCriteria&&priceRange&&colorList&&sizeList) {
-    getPage(1); 
-  }
+  getPage(1);
   
 
 },[sortCriteria,priceRange, colorList, sizeList]); 

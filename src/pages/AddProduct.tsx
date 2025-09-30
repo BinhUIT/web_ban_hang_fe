@@ -6,6 +6,7 @@ import { checkToken } from "../utils/checkToken";
 import { useNavigate } from "react-router-dom";
 import { clearLocalStorage } from "../utils/clearLocalStorage";
 import { onTokenExpire } from "../utils/onTokenExpire";
+import CircleLoader from "../components/CircleLoader";
 
 export default function AddProduct() {
   const [form, setForm] = useState({
@@ -28,6 +29,7 @@ export default function AddProduct() {
    console.log(data);
    setCategories(res);
   }
+  const [isLoading, setIsLoading]= useState(false);
   const [categories, setCategories] = useState<any[]>([]);
   useEffect(()=>{
     fetchData(getCategoryURL,"",setCat);
@@ -67,32 +69,40 @@ export default function AddProduct() {
     const formData = new FormData();
     formData.append("info", new Blob([JSON.stringify(info)], { type: "application/json" }));
     formData.append("image", form.image);
-    const response = await fetch(createProdutURL,{
+    let response;
+    try {
+      setIsLoading(true);
+    response = await fetch(createProdutURL,{
         method:"POST",
         headers:{
             "Authorization":"Bearer "+token
         },
         body:formData
     });
-    
+    setIsLoading(false);
     if(response.ok) {
         toast.success("Create product sucess");
-    } 
-    else if(response.status==401) {
-        toast.error("You have been logout, please login again");
-        clearLocalStorage();
-        navigate("/login");
-        return;
-    }
-    else {
-        const data = await response.json();
-        toast.error(data.message);
-    }
-    navigate("/product_management");
+    } }
+    catch(err) {
+      setIsLoading(false);
+      if(response?.status==401) {
+          toast.error("You have been logout, please login again");
+          clearLocalStorage();
+          
+          navigate("/login");
+          return;
+      }
+      else {
+          const data = await response?.json();
+          toast.error(data.message);
+      }
+      navigate("/product_management");
+  }
   };
 
   return (
     <div className="max-w-screen-md mx-auto pt-20 px-5">
+    {isLoading&&<CircleLoader></CircleLoader>}
       <h1 className="text-3xl font-bold mb-8">Add New Product</h1>
 
       <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow-md space-y-6 border border-gray-200">
