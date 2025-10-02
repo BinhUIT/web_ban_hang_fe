@@ -19,7 +19,8 @@ const CreateProductVariant: React.FC = () => {
     color: "",
     size: "",
     price: "",
-    image: null
+    image: null,
+    quantity:0
   });
   function setSizeAndColor(data:any) {
     setColors(data.listColors);
@@ -165,6 +166,16 @@ const CreateProductVariant: React.FC = () => {
             type="number"
             name="price"
             value={form.price}
+            onChange={handleChange}
+            className="w-full border rounded-lg px-3 py-2 focus:ring focus:ring-blue-200"
+          />
+        </div>
+        <div>
+          <label className="block font-medium mb-1">Quantity</label>
+          <input
+            type="number"
+            name="price"
+            value={form.quantity}
             onChange={handleChange}
             className="w-full border rounded-lg px-3 py-2 focus:ring focus:ring-blue-200"
           />

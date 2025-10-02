@@ -41,3 +41,4 @@ export const logoutURL=(token:string)=>{
     }
     return `${baseURL}/auth/logout?token=${token}`;
 }
+export const registerURL = `${baseURL}/auth/register`;

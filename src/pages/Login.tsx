@@ -23,28 +23,25 @@ const Login = () => {
     if (!checkLoginFormData(data)) return;
     
     // Check if user with the email and password exists
-    fetch(baseURL+"/auth/login",{
+    const response= await fetch(baseURL+"/auth/login",{
       method:"POST",
       headers:{
         "Content-type":"application/json"
       },
       body: JSON.stringify(data)
-    }).then(response=>{
-      response.json().then(data=>{
-        toast.success("You logged in successfully"); 
+    });
+    if(response.ok) {
+      const data= await response.json();
+      toast.success("You logged in successfully"); 
         localStorage.setItem("user", JSON.stringify({email:data.user.email,password:"", id: data.user.id,name:data.user.name, address:data.user.address, phone:data.user.phone, roleId:data.user.role.id})); 
       localStorage.setItem("token",data.token);
       localStorage.setItem("token_expire_at",data.tokenExpireAt);
       store.dispatch(setLoginStatus(true));
       navigate("/user-profile");
-      })
-      
-      
-      return;
-    }).catch(err=>{
-      console.log(err); 
-      toast.error("Please enter correct email and password");
-    });
+    }
+    else {
+      toast.error("Bad credentials, try again");
+    }
   } 
   async function getGoogleAcessToken() {
     const callbackURL = window.location.origin;

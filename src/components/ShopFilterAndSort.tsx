@@ -23,25 +23,25 @@ const ShopFilterAndSort = ({
   const [searchParams] = useSearchParams(); 
   
   
-  function checkParent(parentCat) { 
+  function checkParent(parentCat:any) { 
     const tempCheckMap = new Map(categoryCheckStates);
     dfs(parentCat,tempCheckMap,true);
     setCategoryCheckStates(tempCheckMap);
     console.log("Check Parent");
 
   }
-  function unCheckParent(parentCat) {
+  function unCheckParent(parentCat:any) {
     const tempCheckMap = new Map(categoryCheckStates);
     dfs(parentCat,tempCheckMap,false);
     setCategoryCheckStates(tempCheckMap);
   }
-  function unCheckChild(childCat) {
+  function unCheckChild(childCat:any) {
     const tempCheckMap = new Map(categoryCheckStates);
     tempCheckMap.set(childCat.id,false);
     tempCheckMap.set(childCat.parentNumber,false);
     setCategoryCheckStates(tempCheckMap);
   }
-  function checkChild(childCat) {
+  function checkChild(childCat:any) {
     const tempCheckMap = new Map(categoryCheckStates);
     tempCheckMap.set(childCat.id,true);
     const parent = findParentCatById(childCat.parentNumber);
@@ -63,7 +63,7 @@ const ShopFilterAndSort = ({
     } 
     return null;
   }
- function dfs(category,checkMap,value) {
+ function dfs(category:any,checkMap:any,value:any) {
   if(category==null) {
     return;
   }
