@@ -42,3 +42,4 @@ export const logoutURL=(token:string)=>{
     return `${baseURL}/auth/logout?token=${token}`;
 }
 export const registerURL = `${baseURL}/auth/register`;
+export const getStatisticURL=(from:string,to:string)=>`${baseURL}/admin/get_statistic?from=${from}&to=${to}`;

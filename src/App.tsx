@@ -28,6 +28,7 @@ import AddProduct from "./pages/AddProduct";
 import AddVariant from "./pages/AddVariant";
 import UpdateProduct from "./pages/UpdateProduct";
 import UpdateVariant from "./pages/UpdateVariant";
+import StatisticPage from "./pages/Statistic";
 function redirectToLogin() {
   toast.error("You have no permission");
   localStorage.removeItem("user");
@@ -177,9 +178,14 @@ const router = createBrowserRouter([
         path:"update_variant/:id",
         element:<UpdateVariant/>,
         loader:adminLoader
+      },
+      {
+        path:"statistic",
+        element:<StatisticPage/>,
+        loader:adminLoader
       }
     ],
-  },
+  }, 
 ]);
 
 function App() {

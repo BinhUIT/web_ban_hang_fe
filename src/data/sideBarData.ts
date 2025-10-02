@@ -34,6 +34,10 @@ export const sideBarData = [
         {
             to:"/order_management",
             title:"Order management"
+        },
+        {
+            to:"/statistic",
+            title:"Statistic"
         }
     ],//admin
     [
