@@ -47,7 +47,7 @@ export default function AddProduct() {
   const handleSubmit =async (e:any) => {
     const token= checkToken();
     if(!token) {
-        onTokenExpire(navigate);
+        await onTokenExpire(navigate);
         return;
     }
     e.preventDefault();

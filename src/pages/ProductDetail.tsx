@@ -31,7 +31,7 @@ export default function ProductDetail() {
     async function deleteVariant(id:number) {
       const token = checkToken();
         if(!token) {
-            onTokenExpire(navigate);
+            await onTokenExpire(navigate);
             return;
         }
         const response = await fetch(deleteProductVariantURL(id),{
@@ -51,7 +51,7 @@ export default function ProductDetail() {
         } 
         else {
             if(response.status==401) {
-                onTokenExpire(navigate);
+                await onTokenExpire(navigate);
                 return;
             }
             const data= await response.json();

@@ -58,7 +58,7 @@ const CreateProductVariant: React.FC = () => {
     }
     const token = checkToken();
     if(!token) {
-        onTokenExpire(navigate);
+        await onTokenExpire(navigate);
         return;
     }
     if(!form.image) {

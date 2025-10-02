@@ -36,6 +36,7 @@ const Login = () => {
         localStorage.setItem("user", JSON.stringify({email:data.user.email,password:"", id: data.user.id,name:data.user.name, address:data.user.address, phone:data.user.phone, roleId:data.user.role.id})); 
       localStorage.setItem("token",data.token);
       localStorage.setItem("token_expire_at",data.tokenExpireAt);
+      localStorage.setItem("refreshToken",data.refreshToken);
       store.dispatch(setLoginStatus(true));
       navigate("/user-profile");
     }

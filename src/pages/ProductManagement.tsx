@@ -17,7 +17,7 @@ const ProductManagement = () =>{
         const url = adminGetProductsURL(12,currentPage);
          const token= checkToken();
     if(!token) {
-        onTokenExpire(navigate);
+        await onTokenExpire(navigate);
         return;
     }
         const response = await fetch(url,{
@@ -35,7 +35,7 @@ const ProductManagement = () =>{
             console.log(data);
         }
         else {
-            onTokenExpire(navigate);
+            await onTokenExpire(navigate);
             
         return;
         }
@@ -50,7 +50,7 @@ const ProductManagement = () =>{
     async function deleteProduct(id:number) {
         const token = checkToken();
         if(!token) {
-            onTokenExpire(navigate);
+            await onTokenExpire(navigate);
             return;
         }
         const response = await fetch(deleteProductURL(id),{

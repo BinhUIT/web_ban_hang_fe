@@ -35,7 +35,7 @@ const SingleOrderHistory = () => {
     const token = checkToken();
     
     if(!token) {
-      onTokenExpire(navigate);
+      await onTokenExpire(navigate);
       return;
     }
     const response =await fetch(`${baseURL}/user/cancel-order/${id}`,{
@@ -84,7 +84,7 @@ const SingleOrderHistory = () => {
   async function confirmReceivedOrder() {
     const token = checkToken();
     if(!token) {
-      onTokenExpire(navigate);
+      await onTokenExpire(navigate);
       return;
     }
     const url = userConfirmReceiveURL(id?parseInt(id):-1);
@@ -112,7 +112,7 @@ const SingleOrderHistory = () => {
       return;
     }
     if(!token) {
-      onTokenExpire(navigate);
+      await onTokenExpire(navigate);
       return;
     }
     const url = `${baseURL}/user/order-by-id/${id}`;

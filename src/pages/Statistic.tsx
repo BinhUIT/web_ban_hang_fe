@@ -17,6 +17,7 @@ export default function StatisticPage() {
     const token= checkToken();
     if(!token) {
         onTokenExpire(navigate);
+        
     }
     fetch(getStatisticURL(from,to),{
         headers:{
